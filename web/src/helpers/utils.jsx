@@ -54,7 +54,10 @@ export function getSystemName() {
 
 export function getLogo() {
   let logo = localStorage.getItem('logo');
-  if (!logo) return '/logo.png';
+  if (!logo) {
+    // 优先使用 SVG，如果不存在则使用 PNG
+    return '/logo.svg';
+  }
   return logo;
 }
 
