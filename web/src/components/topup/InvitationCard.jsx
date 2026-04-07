@@ -38,7 +38,34 @@ const InvitationCard = ({
   setOpenTransfer,
   affLink,
   handleAffLinkClick,
+  quotaForInviter,
+  quotaForInvitee,
 }) => {
+  // 根据奖励配置生成奖励说明文案
+  const getRewardDescription = () => {
+    const inviterReward = renderQuota(quotaForInviter || 0);
+    const inviteeReward = renderQuota(quotaForInvitee || 0);
+
+    if (quotaForInviter > 0 && quotaForInvitee > 0) {
+      return t('邀请双方奖励说明', {
+        inviterReward,
+        inviteeReward,
+      });
+    } else if (quotaForInviter > 0) {
+      return t('邀请仅邀请者奖励说明', {
+        inviterReward,
+      });
+    } else if (quotaForInvitee > 0) {
+      return t('邀请仅被邀请者奖励说明', {
+        inviteeReward,
+      });
+    }
+    return '';
+  };
+
+  const rewardDescription = getRewardDescription();
+  const hasInviterReward = quotaForInviter > 0;
+
   return (
     <Card className='!rounded-2xl shadow-sm border-0'>
       {/* 卡片头部 */}
@@ -194,33 +221,30 @@ const InvitationCard = ({
         </Card>
 
         {/* 奖励说明 */}
-        <Card
-          className='!rounded-xl w-full'
-          title={<Text type='tertiary'>{t('奖励说明')}</Text>}
-        >
-          <div className='space-y-3'>
-            <div className='flex items-start gap-2'>
-              <Badge dot type='success' />
-              <Text type='tertiary' className='text-sm'>
-                {t('邀请好友注册，好友充值后您可获得相应奖励')}
-              </Text>
-            </div>
+        {rewardDescription && (
+          <Card
+            className='!rounded-xl w-full'
+            title={<Text type='tertiary'>{t('奖励说明')}</Text>}
+          >
+            <div className='space-y-3'>
+              <div className='flex items-start gap-2'>
+                <Badge dot type='success' />
+                <Text type='tertiary' className='text-sm'>
+                  {rewardDescription}
+                </Text>
+              </div>
 
-            <div className='flex items-start gap-2'>
-              <Badge dot type='success' />
-              <Text type='tertiary' className='text-sm'>
-                {t('通过划转功能将奖励额度转入到您的账户余额中')}
-              </Text>
+              {hasInviterReward && (
+                <div className='flex items-start gap-2'>
+                  <Badge dot type='success' />
+                  <Text type='tertiary' className='text-sm'>
+                    {t('邀请划转提示')}
+                  </Text>
+                </div>
+              )}
             </div>
-
-            <div className='flex items-start gap-2'>
-              <Badge dot type='success' />
-              <Text type='tertiary' className='text-sm'>
-                {t('邀请的好友越多，获得的奖励越多')}
-              </Text>
-            </div>
-          </div>
-        </Card>
+          </Card>
+        )}
       </Space>
     </Card>
   );

@@ -827,14 +827,18 @@ const TopUp = () => {
           allSubscriptions={allSubscriptions}
           reloadSubscriptionSelf={getSubscriptionSelf}
         />
-        <InvitationCard
-          t={t}
-          userState={userState}
-          renderQuota={renderQuota}
-          setOpenTransfer={setOpenTransfer}
-          affLink={affLink}
-          handleAffLinkClick={handleAffLinkClick}
-        />
+        {(statusState?.status?.quota_for_inviter > 0 || statusState?.status?.quota_for_invitee > 0) && (
+          <InvitationCard
+            t={t}
+            userState={userState}
+            renderQuota={renderQuota}
+            setOpenTransfer={setOpenTransfer}
+            affLink={affLink}
+            handleAffLinkClick={handleAffLinkClick}
+            quotaForInviter={statusState?.status?.quota_for_inviter || 0}
+            quotaForInvitee={statusState?.status?.quota_for_invitee || 0}
+          />
+        )}
       </div>
     </div>
   );
