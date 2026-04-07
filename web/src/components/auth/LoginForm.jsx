@@ -63,6 +63,7 @@ import {
 import OIDCIcon from '../common/logo/OIDCIcon';
 import WeChatIcon from '../common/logo/WeChatIcon';
 import LinuxDoIcon from '../common/logo/LinuxDoIcon';
+import BrandLogo from '../common/logo/BrandLogo';
 import TwoFAVerification from './TwoFAVerification';
 import { useTranslation } from 'react-i18next';
 import { SiDiscord } from 'react-icons/si';
@@ -503,12 +504,17 @@ const LoginForm = () => {
   const renderOAuthOptions = () => {
     return (
       <div className='flex flex-col items-center'>
-        <div className='w-full max-w-md'>
-          <div className='flex items-center justify-center mb-6 gap-2'>
-            <img src={logo} alt='Logo' className='h-10' />
-            <Title heading={3} className='!text-gray-800'>
-              {systemName}
-            </Title>
+          <div className='w-full max-w-md'>
+            <div className='flex items-center justify-center mb-6 gap-2'>
+              <BrandLogo
+                logo={logo}
+                alt={systemName}
+                className='h-10 w-10 text-current'
+                imageClassName='h-10 w-auto object-contain'
+              />
+              <Title heading={3} className='!text-gray-800'>
+                {systemName}
+              </Title>
           </div>
 
           <Card className='border-0 !rounded-2xl overflow-hidden'>
@@ -721,7 +727,12 @@ const LoginForm = () => {
       <div className='flex flex-col items-center'>
         <div className='w-full max-w-md'>
           <div className='flex items-center justify-center mb-6 gap-2'>
-            <img src={logo} alt='Logo' className='h-10' />
+            <BrandLogo
+              logo={logo}
+              alt={systemName}
+              className='h-10 w-10 text-current'
+              imageClassName='h-10 w-auto object-contain'
+            />
             <Title heading={3}>{systemName}</Title>
           </div>
 

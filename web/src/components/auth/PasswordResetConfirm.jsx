@@ -30,6 +30,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { Button, Card, Form, Typography, Banner } from '@douyinfe/semi-ui';
 import { IconMail, IconLock, IconCopy } from '@douyinfe/semi-icons';
 import { useTranslation } from 'react-i18next';
+import BrandLogo from '../common/logo/BrandLogo';
 
 const { Text, Title } = Typography;
 
@@ -118,7 +119,12 @@ const PasswordResetConfirm = () => {
         <div className='flex flex-col items-center'>
           <div className='w-full max-w-md'>
             <div className='flex items-center justify-center mb-6 gap-2'>
-              <img src={logo} alt='Logo' className='h-10' />
+              <BrandLogo
+                logo={logo}
+                alt={systemName}
+                className='h-10 w-10 text-current'
+                imageClassName='h-10 w-auto object-contain'
+              />
               <Title heading={3} className='!text-gray-800'>
                 {systemName}
               </Title>

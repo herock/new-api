@@ -19,9 +19,9 @@ For commercial licensing, please contact support@quantumnous.com
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Typography, Tag, Icon } from '@douyinfe/semi-ui';
+import { Typography, Tag } from '@douyinfe/semi-ui';
 import SkeletonWrapper from '../components/SkeletonWrapper';
-import PureLogoIcon from '../../common/logo/PureLogoIcon';
+import BrandLogo from '../../common/logo/BrandLogo';
 
 const HeaderLogo = ({
   isMobile,
@@ -42,10 +42,11 @@ const HeaderLogo = ({
     <Link to='/' className='group flex items-center gap-2'>
       <div className='relative w-8 h-8 md:w-8 md:h-8 flex items-center justify-center'>
         <SkeletonWrapper loading={isLoading || !logoLoaded} type='image' />
-        <Icon
-          svg={<PureLogoIcon />}
-          className={`text-current transition-all duration-200 group-hover:scale-110 ${!isLoading && logoLoaded ? 'opacity-100' : 'opacity-0'}`}
-          size='extra-large'
+        <BrandLogo
+          logo={logo}
+          alt={systemName}
+          className={`h-8 w-8 text-current transition-all duration-200 group-hover:scale-110 ${!isLoading && logoLoaded ? 'opacity-100' : 'opacity-0'}`}
+          imageClassName={`h-8 w-8 object-contain transition-all duration-200 group-hover:scale-110 ${!isLoading && logoLoaded ? 'opacity-100' : 'opacity-0'}`}
         />
       </div>
       <div className='hidden md:flex items-center gap-2'>

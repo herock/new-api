@@ -28,6 +28,7 @@ import { normalizeLanguage } from '../../i18n/language';
 import { useIsMobile } from './useIsMobile';
 import { useSidebarCollapsed } from './useSidebarCollapsed';
 import { useMinimumLoadingTime } from './useMinimumLoadingTime';
+import { isDefaultBrandLogo } from '../../components/common/logo/BrandLogo';
 
 export const useHeaderBar = ({ onMobileMenuToggle, drawerOpen }) => {
   const { t, i18n } = useTranslation();
@@ -97,6 +98,10 @@ export const useHeaderBar = ({ onMobileMenuToggle, drawerOpen }) => {
   // Logo loading effect
   useEffect(() => {
     setLogoLoaded(false);
+    if (isDefaultBrandLogo(logo)) {
+      setLogoLoaded(true);
+      return;
+    }
     if (!logo) return;
     const img = new Image();
     img.src = logo;
