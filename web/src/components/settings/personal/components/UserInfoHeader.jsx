@@ -55,16 +55,7 @@ const UserInfoHeader = ({ t, userState }) => {
     <Card
       className='!rounded-2xl overflow-hidden'
       cover={
-        <div
-          className='relative h-32'
-          style={{
-            '--palette-primary-darkerChannel': '0 75 80',
-            backgroundImage: `linear-gradient(0deg, rgba(var(--palette-primary-darkerChannel) / 80%), rgba(var(--palette-primary-darkerChannel) / 80%)), url('/cover-4.webp')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-          }}
-        >
+        <div className='relative h-32 bg-semi-color-fill-0'>
           {/* 用户信息内容 */}
           <div className='relative z-10 h-full flex flex-col justify-end p-6'>
             <div className='flex items-center'>
@@ -73,10 +64,7 @@ const UserInfoHeader = ({ t, userState }) => {
                   {getAvatarText()}
                 </Avatar>
                 <div className='flex-1 min-w-0 flex flex-col justify-between'>
-                  <div
-                    className='text-3xl font-bold truncate'
-                    style={{ color: 'white' }}
-                  >
+                  <div className='text-3xl font-bold truncate text-semi-color-text-0'>
                     {getUsername()}
                   </div>
                   <div className='flex flex-wrap items-center gap-2'>
@@ -84,7 +72,6 @@ const UserInfoHeader = ({ t, userState }) => {
                       <Tag
                         size='large'
                         shape='circle'
-                        style={{ color: 'white' }}
                       >
                         {t('超级管理员')}
                       </Tag>
@@ -92,7 +79,6 @@ const UserInfoHeader = ({ t, userState }) => {
                       <Tag
                         size='large'
                         shape='circle'
-                        style={{ color: 'white' }}
                       >
                         {t('管理员')}
                       </Tag>
@@ -100,7 +86,6 @@ const UserInfoHeader = ({ t, userState }) => {
                       <Tag
                         size='large'
                         shape='circle'
-                        style={{ color: 'white' }}
                       >
                         {t('普通用户')}
                       </Tag>

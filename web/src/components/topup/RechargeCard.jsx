@@ -124,19 +124,10 @@ const RechargeCard = ({
       <Card
         className='!rounded-xl w-full'
         cover={
-          <div
-            className='relative h-30'
-            style={{
-              '--palette-primary-darkerChannel': '37 99 235',
-              backgroundImage: `linear-gradient(0deg, rgba(var(--palette-primary-darkerChannel) / 80%), rgba(var(--palette-primary-darkerChannel) / 80%)), url('/cover-4.webp')`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
-            }}
-          >
+          <div className='relative h-30 bg-semi-color-fill-0'>
             <div className='relative z-10 h-full flex flex-col justify-between p-4'>
               <div className='flex justify-between items-center'>
-                <Text strong style={{ color: 'white', fontSize: '16px' }}>
+                <Text strong style={{ fontSize: '16px' }}>
                   {t('账户统计')}
                 </Text>
               </div>
@@ -147,7 +138,6 @@ const RechargeCard = ({
                 <div className='text-center'>
                   <div
                     className='text-base sm:text-2xl font-bold mb-2'
-                    style={{ color: 'white' }}
                   >
                     {renderQuota(userState?.user?.quota)}
                   </div>
@@ -155,11 +145,11 @@ const RechargeCard = ({
                     <Wallet
                       size={14}
                       className='mr-1'
-                      style={{ color: 'rgba(255,255,255,0.8)' }}
+                      style={{ color: 'var(--semi-color-text-2)' }}
                     />
                     <Text
                       style={{
-                        color: 'rgba(255,255,255,0.8)',
+                        color: 'var(--semi-color-text-2)',
                         fontSize: '12px',
                       }}
                     >
@@ -172,7 +162,6 @@ const RechargeCard = ({
                 <div className='text-center'>
                   <div
                     className='text-base sm:text-2xl font-bold mb-2'
-                    style={{ color: 'white' }}
                   >
                     {renderQuota(userState?.user?.used_quota)}
                   </div>
@@ -180,11 +169,11 @@ const RechargeCard = ({
                     <TrendingUp
                       size={14}
                       className='mr-1'
-                      style={{ color: 'rgba(255,255,255,0.8)' }}
+                      style={{ color: 'var(--semi-color-text-2)' }}
                     />
                     <Text
                       style={{
-                        color: 'rgba(255,255,255,0.8)',
+                        color: 'var(--semi-color-text-2)',
                         fontSize: '12px',
                       }}
                     >
@@ -197,7 +186,6 @@ const RechargeCard = ({
                 <div className='text-center'>
                   <div
                     className='text-base sm:text-2xl font-bold mb-2'
-                    style={{ color: 'white' }}
                   >
                     {userState?.user?.request_count || 0}
                   </div>
@@ -205,11 +193,11 @@ const RechargeCard = ({
                     <BarChart2
                       size={14}
                       className='mr-1'
-                      style={{ color: 'rgba(255,255,255,0.8)' }}
+                      style={{ color: 'var(--semi-color-text-2)' }}
                     />
                     <Text
                       style={{
-                        color: 'rgba(255,255,255,0.8)',
+                        color: 'var(--semi-color-text-2)',
                         fontSize: '12px',
                       }}
                     >

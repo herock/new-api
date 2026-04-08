@@ -322,21 +322,16 @@ const PricingVendorIntro = memo(
         <Card
           className='!rounded-2xl shadow-sm border-0'
           cover={
-            <div
-              className='relative h-full'
-              style={createCoverStyle(primaryDarkerChannel)}
-            >
+            <div className='relative h-full bg-semi-color-fill-0'>
               <div className='relative z-10 h-full flex items-center justify-between p-4'>
                 <div className='flex-1 min-w-0 mr-4'>
                   <div className='flex flex-row flex-wrap items-center gap-2 sm:gap-3 mb-2'>
                     <h2
-                      className='text-lg sm:text-xl font-bold truncate'
-                      style={COMPONENT_STYLES.titleText}
+                      className='text-lg sm:text-xl font-bold truncate text-semi-color-text-0'
                     >
                       {title}
                     </h2>
                     <Tag
-                      style={COMPONENT_STYLES.tag}
                       shape='circle'
                       size='small'
                       className='self-center'
@@ -345,8 +340,7 @@ const PricingVendorIntro = memo(
                     </Tag>
                   </div>
                   <Paragraph
-                    className='text-xs sm:text-sm leading-relaxed !mb-0 cursor-pointer'
-                    style={COMPONENT_STYLES.descriptionText}
+                    className='text-xs sm:text-sm leading-relaxed !mb-0 cursor-pointer text-semi-color-text-2'
                     ellipsis={{ rows: 2 }}
                     onClick={() => handleOpenDescModal(description)}
                   >
