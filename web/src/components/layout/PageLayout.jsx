@@ -92,6 +92,7 @@ const PageLayout = () => {
       if (success) {
         statusDispatch({ type: 'set', payload: data });
         setStatusData(data);
+        document.title = data?.system_name || getSystemName();
       } else {
         showError('Unable to connect to server');
       }
