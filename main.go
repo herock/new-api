@@ -153,6 +153,8 @@ func main() {
 
 	// Initialize HTTP server
 	server := gin.New()
+	// Trust Cloudflare's CF-Connecting-IP header for client IP
+	server.TrustedPlatform = gin.PlatformCloudflare
 	server.Use(gin.CustomRecovery(func(c *gin.Context, err any) {
 		common.SysLog(fmt.Sprintf("panic detected: %v", err))
 		c.JSON(http.StatusInternalServerError, gin.H{
