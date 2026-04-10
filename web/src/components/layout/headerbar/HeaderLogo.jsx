@@ -40,13 +40,13 @@ const HeaderLogo = ({
 
   return (
     <Link to='/' className='group flex items-center gap-2'>
-      <div className='relative w-8 h-8 md:w-8 md:h-8 flex items-center justify-center'>
+      <div className='relative w-6 h-6 md:w-6 md:h-6 flex items-center justify-center'>
         <SkeletonWrapper loading={isLoading || !logoLoaded} type='image' />
         <BrandLogo
           logo={logo}
           alt={systemName}
-          className={`h-8 w-8 text-current transition-all duration-200 group-hover:scale-110 ${!isLoading && logoLoaded ? 'opacity-100' : 'opacity-0'}`}
-          imageClassName={`h-8 w-8 object-contain transition-all duration-200 group-hover:scale-110 ${!isLoading && logoLoaded ? 'opacity-100' : 'opacity-0'}`}
+          className={`h-6 w-6 text-current transition-all duration-200 group-hover:scale-110 ${!isLoading && logoLoaded ? 'opacity-100' : 'opacity-0'}`}
+          imageClassName={`h-6 w-6 object-contain transition-all duration-200 group-hover:scale-110 ${!isLoading && logoLoaded ? 'opacity-100' : 'opacity-0'}`}
         />
       </div>
       <div className='hidden md:flex items-center gap-2'>
