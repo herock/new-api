@@ -39,7 +39,21 @@ const ActionButtons = ({
   logout,
   navigate,
   t,
+  authMode = false,
 }) => {
+  // Auth mode: only show language selector
+  if (authMode) {
+    return (
+      <div className='flex items-center gap-2 md:gap-3'>
+        <LanguageSelector
+          currentLang={currentLang}
+          onLanguageChange={onLanguageChange}
+          t={t}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className='flex items-center gap-2 md:gap-3'>
       <NewYearButton isNewYear={isNewYear} />

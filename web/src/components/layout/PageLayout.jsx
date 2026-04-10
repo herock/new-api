@@ -49,6 +49,10 @@ const PageLayout = () => {
   const { i18n } = useTranslation();
   const location = useLocation();
 
+  // Auth pages that should hide the header and sidebar
+  const authPages = ['/login', '/register', '/reset', '/user/reset'];
+  const isAuthRoute = authPages.includes(location.pathname);
+
   const cardProPages = [
     '/console/channel',
     '/console/log',
@@ -69,7 +73,7 @@ const PageLayout = () => {
     location.pathname !== '/console/playground';
 
   const isConsoleRoute = location.pathname.startsWith('/console');
-  const showSider = isConsoleRoute && (!isMobile || drawerOpen);
+  const showSider = !isAuthRoute && isConsoleRoute && (!isMobile || drawerOpen);
 
   useEffect(() => {
     if (isMobile && drawerOpen && collapsed) {
@@ -167,6 +171,7 @@ const PageLayout = () => {
         <HeaderBar
           onMobileMenuToggle={() => setDrawerOpen((prev) => !prev)}
           drawerOpen={drawerOpen}
+          isAuthRoute={isAuthRoute}
         />
       </Header>
       <Layout
@@ -206,6 +211,7 @@ const PageLayout = () => {
             flex: '1 1 auto',
             display: 'flex',
             flexDirection: 'column',
+            marginTop: isAuthRoute ? '0' : '64px',
           }}
         >
           <Content
