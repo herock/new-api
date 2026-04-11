@@ -1,0 +1,305 @@
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_DIR="$SCRIPT_DIR"
+CONFIG_FILE="${DEPLOY_CONFIG_FILE:-$REPO_DIR/.deploy.env}"
+
+CURRENT_STEP="initialization"
+
+log() {
+  printf '[deploy] %s\n' "$*"
+}
+
+warn() {
+  printf '[deploy] warning: %s\n' "$*" >&2
+}
+
+die() {
+  printf '[deploy] error: %s\n' "$*" >&2
+  exit 1
+}
+
+on_error() {
+  local exit_code=$?
+  if [[ $exit_code -ne 0 ]]; then
+    printf '[deploy] failed during: %s\n' "$CURRENT_STEP" >&2
+  fi
+  exit "$exit_code"
+}
+
+trap on_error ERR
+
+usage() {
+  cat <<'EOF'
+Usage: ./deploy [--yes]
+
+Options:
+  --yes, -y    Skip the interactive publish confirmation.
+  --help, -h   Show this help message.
+
+Before first use:
+  1. Copy deploy.env.example to .deploy.env
+  2. Adjust the server-specific values in .deploy.env
+  3. Ensure the remote user can restart the service non-interactively
+     (for example via sudoers + "sudo -n /usr/bin/systemctl restart pureapi")
+EOF
+}
+
+AUTO_CONFIRM=0
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --yes|-y)
+      AUTO_CONFIRM=1
+      shift
+      ;;
+    --help|-h)
+      usage
+      exit 0
+      ;;
+    *)
+      die "Unknown argument: $1"
+      ;;
+  esac
+done
+
+[[ -f "$CONFIG_FILE" ]] || die "Missing config file: $CONFIG_FILE. Copy deploy.env.example to .deploy.env first."
+
+# shellcheck disable=SC1090
+source "$CONFIG_FILE"
+
+REMOTE_SSH_TARGET="${REMOTE_SSH_TARGET:-}"
+REMOTE_BASE_DIR="${REMOTE_BASE_DIR:-/home/pureapi}"
+REMOTE_RELEASES_DIR="${REMOTE_RELEASES_DIR:-$REMOTE_BASE_DIR/releases}"
+REMOTE_CURRENT_LINK="${REMOTE_CURRENT_LINK:-$REMOTE_BASE_DIR/current}"
+REMOTE_SHARED_DIR="${REMOTE_SHARED_DIR:-$REMOTE_BASE_DIR/shared}"
+SERVICE_NAME="${SERVICE_NAME:-pureapi}"
+REMOTE_SYSTEMCTL_BIN="${REMOTE_SYSTEMCTL_BIN:-/usr/bin/systemctl}"
+HEALTHCHECK_URL="${HEALTHCHECK_URL:-http://127.0.0.1:3000/api/status}"
+HEALTHCHECK_RETRIES="${HEALTHCHECK_RETRIES:-12}"
+HEALTHCHECK_INTERVAL="${HEALTHCHECK_INTERVAL:-2}"
+BINARY_NAME="${BINARY_NAME:-pureapi-server}"
+LOCAL_BUILD_ROOT="${LOCAL_BUILD_ROOT:-$REPO_DIR/build}"
+LOCAL_FRONTEND_DIR="${LOCAL_FRONTEND_DIR:-$REPO_DIR/web}"
+
+[[ -n "$REMOTE_SSH_TARGET" ]] || die "REMOTE_SSH_TARGET is required in $CONFIG_FILE"
+[[ -d "$REPO_DIR/.git" ]] || die "This script must live in the git repository root."
+[[ -d "$LOCAL_FRONTEND_DIR" ]] || die "Frontend directory not found: $LOCAL_FRONTEND_DIR"
+
+read -r -a SSH_OPTS <<< "${SSH_OPTIONS:-}"
+
+RSYNC_RSH="ssh"
+if ((${#SSH_OPTS[@]} > 0)); then
+  RSYNC_RSH+=" $(printf '%q ' "${SSH_OPTS[@]}")"
+fi
+
+require_cmd() {
+  command -v "$1" >/dev/null 2>&1 || die "Required command not found: $1"
+}
+
+CURRENT_STEP="dependency check"
+require_cmd git
+require_cmd bun
+require_cmd go
+require_cmd ssh
+require_cmd rsync
+require_cmd curl
+require_cmd shasum
+
+CURRENT_STEP="git status check"
+branch="$(git -C "$REPO_DIR" rev-parse --abbrev-ref HEAD)"
+[[ "$branch" != "HEAD" ]] || die "Detached HEAD detected. Check out a branch before deploying."
+
+git_status="$(git -C "$REPO_DIR" status --short --untracked-files=normal)"
+if [[ -n "$git_status" ]]; then
+  printf '[deploy] error: refusing to deploy with uncommitted changes:\n%s\n' "$git_status" >&2
+  exit 1
+fi
+
+CURRENT_STEP="git metadata"
+commit_full="$(git -C "$REPO_DIR" rev-parse HEAD)"
+commit_short="$(git -C "$REPO_DIR" rev-parse --short HEAD)"
+commit_subject="$(git -C "$REPO_DIR" log -1 --pretty=%s)"
+commit_author="$(git -C "$REPO_DIR" log -1 --pretty=%an)"
+commit_date="$(git -C "$REPO_DIR" log -1 --pretty=%ci)"
+
+CURRENT_STEP="remote preflight"
+if ! ssh "${SSH_OPTS[@]}" "$REMOTE_SSH_TARGET" "echo connected >/dev/null"; then
+  die "Unable to connect to $REMOTE_SSH_TARGET over SSH."
+fi
+if ! ssh "${SSH_OPTS[@]}" "$REMOTE_SSH_TARGET" "command -v curl >/dev/null && test -x '$REMOTE_SYSTEMCTL_BIN'"; then
+  die "Remote host is missing curl or $REMOTE_SYSTEMCTL_BIN."
+fi
+
+next_version() {
+  local today local_max remote_max local_item remote_item local_seq remote_seq
+  today="$(date '+%Y%m%d')"
+  local_max=0
+  remote_max=0
+
+  if [[ -d "$LOCAL_BUILD_ROOT" ]]; then
+    while IFS= read -r local_item; do
+      [[ "$local_item" =~ ^${today}([0-9]{2})$ ]] || continue
+      local_seq="${BASH_REMATCH[1]}"
+      if (( 10#$local_seq > local_max )); then
+        local_max=$((10#$local_seq))
+      fi
+    done < <(find "$LOCAL_BUILD_ROOT" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; 2>/dev/null)
+  fi
+
+  while IFS= read -r remote_item; do
+    [[ "$remote_item" =~ ^${today}([0-9]{2})$ ]] || continue
+    remote_seq="${BASH_REMATCH[1]}"
+    if (( 10#$remote_seq > remote_max )); then
+      remote_max=$((10#$remote_seq))
+    fi
+  done < <(
+    ssh "${SSH_OPTS[@]}" "$REMOTE_SSH_TARGET" \
+      "mkdir -p '$REMOTE_RELEASES_DIR' && find '$REMOTE_RELEASES_DIR' -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null"
+  )
+
+  local next_seq=$(( local_max > remote_max ? local_max + 1 : remote_max + 1 ))
+  if (( next_seq > 99 )); then
+    die "Too many releases for today (${today}). Sequence exceeded 99."
+  fi
+
+  printf '%s%02d\n' "$today" "$next_seq"
+}
+
+CURRENT_STEP="version planning"
+version="$(next_version)"
+release_dir="$LOCAL_BUILD_ROOT/$version"
+release_binary="$release_dir/$BINARY_NAME"
+
+printf '\n'
+log "Ready to publish this revision:"
+printf '  branch: %s\n' "$branch"
+printf '  commit: %s\n' "$commit_short"
+printf '  title:  %s\n' "$commit_subject"
+printf '  author: %s\n' "$commit_author"
+printf '  date:   %s\n' "$commit_date"
+printf '  target: %s\n' "$REMOTE_SSH_TARGET"
+printf '  service: %s\n' "$SERVICE_NAME"
+printf '  version: %s\n' "$version"
+printf '\n'
+
+if (( AUTO_CONFIRM == 0 )); then
+  read -r -p "Publish version $version to $REMOTE_SSH_TARGET? [y/N] " reply
+  case "$reply" in
+    y|Y|yes|YES)
+      ;;
+    *)
+      die "Deployment cancelled by user."
+      ;;
+  esac
+fi
+
+CURRENT_STEP="git push"
+log "Pushing branch $branch to origin..."
+git -C "$REPO_DIR" push origin "$branch"
+remote_commit="$(git -C "$REPO_DIR" ls-remote --heads origin "$branch" | awk '{print $1}')"
+[[ "$remote_commit" == "$commit_full" ]] || die "origin/$branch is not at $commit_full after push."
+
+CURRENT_STEP="prepare local release directory"
+mkdir -p "$release_dir"
+
+CURRENT_STEP="frontend build"
+log "Building frontend with bun..."
+(
+  cd "$LOCAL_FRONTEND_DIR"
+  VERSION="$version" DISABLE_ESLINT_PLUGIN='true' bun run build
+)
+
+CURRENT_STEP="go build"
+log "Building Go binary..."
+(
+  cd "$REPO_DIR"
+  VERSION="$version" GOOS=linux GOARCH=amd64 \
+    go build \
+      -ldflags "-s -w -X github.com/QuantumNous/new-api/common.Version=$version" \
+      -o "$release_binary" \
+      main.go
+)
+
+CURRENT_STEP="release metadata"
+chmod +x "$release_binary"
+printf '%s\n' "$version" > "$release_dir/VERSION"
+printf '%s\n' "$commit_full" > "$release_dir/COMMIT"
+printf '%s\n' "$commit_subject" > "$release_dir/COMMIT_SUBJECT"
+printf '%s\n' "$branch" > "$release_dir/BRANCH"
+date -u '+%Y-%m-%dT%H:%M:%SZ' > "$release_dir/BUILT_AT"
+shasum -a 256 "$release_binary" | awk '{print $1}' > "$release_dir/SHA256"
+
+CURRENT_STEP="remote upload"
+remote_release_dir="$REMOTE_RELEASES_DIR/$version"
+log "Uploading release to $REMOTE_SSH_TARGET:$remote_release_dir ..."
+ssh "${SSH_OPTS[@]}" "$REMOTE_SSH_TARGET" \
+  "mkdir -p '$remote_release_dir' '$(dirname "$REMOTE_CURRENT_LINK")' '$REMOTE_SHARED_DIR'"
+rsync -az -e "$RSYNC_RSH" "$release_dir/" "$REMOTE_SSH_TARGET:$remote_release_dir/"
+
+CURRENT_STEP="remote activate"
+log "Switching remote current release and restarting service..."
+ssh "${SSH_OPTS[@]}" "$REMOTE_SSH_TARGET" "bash -s" -- \
+  "$remote_release_dir" \
+  "$REMOTE_CURRENT_LINK" \
+  "$BINARY_NAME" \
+  "$SERVICE_NAME" \
+  "$REMOTE_SYSTEMCTL_BIN" \
+  "$HEALTHCHECK_URL" \
+  "$HEALTHCHECK_RETRIES" \
+  "$HEALTHCHECK_INTERVAL" \
+  "$version" <<'REMOTE_SCRIPT'
+set -Eeuo pipefail
+
+release_dir="$1"
+current_link="$2"
+binary_name="$3"
+service_name="$4"
+systemctl_bin="$5"
+healthcheck_url="$6"
+healthcheck_retries="$7"
+healthcheck_interval="$8"
+expected_version="$9"
+
+previous_current_target=""
+
+[[ -x "$release_dir/$binary_name" ]] || {
+  echo "[deploy-remote] missing executable: $release_dir/$binary_name" >&2
+  exit 1
+}
+
+if [[ -e "$current_link" || -L "$current_link" ]]; then
+  previous_current_target="$(readlink -f "$current_link" || true)"
+fi
+
+ln -sfn "$release_dir" "$current_link"
+
+sudo -n "$systemctl_bin" restart "$service_name"
+
+for _ in $(seq 1 "$healthcheck_retries"); do
+  response="$(curl -fsS --max-time 10 "$healthcheck_url" || true)"
+  if [[ -n "$response" ]] && [[ "$response" == *"\"version\":\"$expected_version\""* ]]; then
+    exit 0
+  fi
+  sleep "$healthcheck_interval"
+done
+
+echo "[deploy-remote] health check failed, rolling back..." >&2
+
+if [[ -n "$previous_current_target" ]]; then
+  ln -sfn "$previous_current_target" "$current_link"
+else
+  rm -f "$current_link"
+fi
+
+sudo -n "$systemctl_bin" restart "$service_name"
+exit 1
+REMOTE_SCRIPT
+
+CURRENT_STEP="post-deploy verification"
+log "Deployment succeeded."
+printf '  version: %s\n' "$version"
+printf '  artifact: %s\n' "$release_binary"
+printf '  remote release: %s\n' "$remote_release_dir"
+printf '  current link: %s -> %s\n' "$REMOTE_CURRENT_LINK" "$remote_release_dir"
