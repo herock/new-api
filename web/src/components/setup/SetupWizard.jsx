@@ -84,9 +84,9 @@ const SetupWizard = () => {
       if (success) {
         setSetupStatus(data);
 
-        // If setup is already completed, redirect to home
+        // If setup is already completed, redirect to console
         if (data.status) {
-          window.location.href = '/';
+          window.location.href = '/console';
           return;
         }
 

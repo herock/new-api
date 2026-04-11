@@ -18,7 +18,6 @@ For commercial licensing, please contact support@quantumnous.com
 */
 
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { Typography, Tag } from '@douyinfe/semi-ui';
 import SkeletonWrapper from '../components/SkeletonWrapper';
 import BrandLogo from '../../common/logo/BrandLogo';
@@ -39,7 +38,7 @@ const HeaderLogo = ({
   }
 
   return (
-    <Link to='/' className='group flex items-center gap-2'>
+    <a href='https://pureapi.net' className='group flex items-center gap-2'>
       <div className='relative w-6 h-6 md:w-6 md:h-6 flex items-center justify-center'>
         <SkeletonWrapper loading={isLoading || !logoLoaded} type='image' />
         <BrandLogo
@@ -76,7 +75,7 @@ const HeaderLogo = ({
           )}
         </div>
       </div>
-    </Link>
+    </a>
   );
 };
 
