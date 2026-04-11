@@ -41,6 +41,8 @@ cp deploy.env.example .deploy.env
 
 Edit `.deploy.env` for your server.
 
+The deploy workflow requires `rsync` on both the local machine and the remote server. Missing `rsync` is treated as a hard failure.
+
 ### 2. Remote directory layout
 
 The script expects or creates these paths:
