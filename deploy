@@ -87,6 +87,7 @@ LOCAL_FRONTEND_DIR="${LOCAL_FRONTEND_DIR:-$REPO_DIR/web}"
 [[ -d "$REPO_DIR/.git" ]] || die "This script must live in the git repository root."
 [[ -d "$LOCAL_FRONTEND_DIR" ]] || die "Frontend directory not found: $LOCAL_FRONTEND_DIR"
 
+SSH_OPTS=()
 read -r -a SSH_OPTS <<< "${SSH_OPTIONS:-}"
 
 RSYNC_RSH="ssh"
