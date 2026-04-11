@@ -95,6 +95,14 @@ if ((${#SSH_OPTS[@]} > 0)); then
   RSYNC_RSH+=" $(printf '%q ' "${SSH_OPTS[@]}")"
 fi
 
+run_ssh() {
+  if ((${#SSH_OPTS[@]} > 0)); then
+    ssh "${SSH_OPTS[@]}" "$@"
+  else
+    ssh "$@"
+  fi
+}
+
 require_cmd() {
   command -v "$1" >/dev/null 2>&1 || die "Required command not found: $1"
 }
@@ -126,10 +134,10 @@ commit_author="$(git -C "$REPO_DIR" log -1 --pretty=%an)"
 commit_date="$(git -C "$REPO_DIR" log -1 --pretty=%ci)"
 
 CURRENT_STEP="remote preflight"
-if ! ssh "${SSH_OPTS[@]}" "$REMOTE_SSH_TARGET" "echo connected >/dev/null"; then
+if ! run_ssh "$REMOTE_SSH_TARGET" "echo connected >/dev/null"; then
   die "Unable to connect to $REMOTE_SSH_TARGET over SSH."
 fi
-if ! ssh "${SSH_OPTS[@]}" "$REMOTE_SSH_TARGET" "command -v curl >/dev/null && test -x '$REMOTE_SYSTEMCTL_BIN'"; then
+if ! run_ssh "$REMOTE_SSH_TARGET" "command -v curl >/dev/null && test -x '$REMOTE_SYSTEMCTL_BIN'"; then
   die "Remote host is missing curl or $REMOTE_SYSTEMCTL_BIN."
 fi
 
@@ -156,7 +164,7 @@ next_version() {
       remote_max=$((10#$remote_seq))
     fi
   done < <(
-    ssh "${SSH_OPTS[@]}" "$REMOTE_SSH_TARGET" \
+    run_ssh "$REMOTE_SSH_TARGET" \
       "mkdir -p '$REMOTE_RELEASES_DIR' && find '$REMOTE_RELEASES_DIR' -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null"
   )
 
@@ -235,13 +243,13 @@ shasum -a 256 "$release_binary" | awk '{print $1}' > "$release_dir/SHA256"
 CURRENT_STEP="remote upload"
 remote_release_dir="$REMOTE_RELEASES_DIR/$version"
 log "Uploading release to $REMOTE_SSH_TARGET:$remote_release_dir ..."
-ssh "${SSH_OPTS[@]}" "$REMOTE_SSH_TARGET" \
+run_ssh "$REMOTE_SSH_TARGET" \
   "mkdir -p '$remote_release_dir' '$(dirname "$REMOTE_CURRENT_LINK")' '$REMOTE_SHARED_DIR'"
 rsync -az -e "$RSYNC_RSH" "$release_dir/" "$REMOTE_SSH_TARGET:$remote_release_dir/"
 
 CURRENT_STEP="remote activate"
 log "Switching remote current release and restarting service..."
-ssh "${SSH_OPTS[@]}" "$REMOTE_SSH_TARGET" "bash -s" -- \
+run_ssh "$REMOTE_SSH_TARGET" "bash -s" -- \
   "$remote_release_dir" \
   "$REMOTE_CURRENT_LINK" \
   "$BINARY_NAME" \
