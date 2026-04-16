@@ -90,11 +90,6 @@ LOCAL_FRONTEND_DIR="${LOCAL_FRONTEND_DIR:-$REPO_DIR/web}"
 SSH_OPTS=()
 read -r -a SSH_OPTS <<< "${SSH_OPTIONS:-}"
 
-RSYNC_RSH="ssh"
-if ((${#SSH_OPTS[@]} > 0)); then
-  RSYNC_RSH+=" $(printf '%q ' "${SSH_OPTS[@]}")"
-fi
-
 run_ssh() {
   if ((${#SSH_OPTS[@]} > 0)); then
     ssh "${SSH_OPTS[@]}" "$@"
@@ -112,7 +107,6 @@ require_cmd git
 require_cmd bun
 require_cmd go
 require_cmd ssh
-require_cmd rsync
 require_cmd curl
 require_cmd shasum
 
@@ -139,9 +133,6 @@ if ! run_ssh "$REMOTE_SSH_TARGET" "echo connected >/dev/null"; then
 fi
 if ! run_ssh "$REMOTE_SSH_TARGET" "command -v curl >/dev/null && test -x '$REMOTE_SYSTEMCTL_BIN'"; then
   die "Remote host is missing curl or $REMOTE_SYSTEMCTL_BIN."
-fi
-if ! run_ssh "$REMOTE_SSH_TARGET" "command -v rsync >/dev/null"; then
-  die "Remote host is missing rsync."
 fi
 
 next_version() {
@@ -248,7 +239,13 @@ remote_release_dir="$REMOTE_RELEASES_DIR/$version"
 log "Uploading release to $REMOTE_SSH_TARGET:$remote_release_dir ..."
 run_ssh "$REMOTE_SSH_TARGET" \
   "mkdir -p '$remote_release_dir' '$(dirname "$REMOTE_CURRENT_LINK")' '$REMOTE_SHARED_DIR'"
-rsync -az -e "$RSYNC_RSH" "$release_dir/" "$REMOTE_SSH_TARGET:$remote_release_dir/"
+SCP_CMD=(scp -v -r)
+if ((${#SSH_OPTS[@]} > 0)); then
+  for opt in "${SSH_OPTS[@]}"; do
+    SCP_CMD+=(-o "$opt")
+  done
+fi
+"${SCP_CMD[@]}" "$release_dir/" "$REMOTE_SSH_TARGET:$remote_release_dir/"
 
 CURRENT_STEP="remote activate"
 log "Switching remote current release and restarting service..."
