@@ -245,7 +245,7 @@ if ((${#SSH_OPTS[@]} > 0)); then
     SCP_CMD+=(-o "$opt")
   done
 fi
-"${SCP_CMD[@]}" "$release_dir" "$REMOTE_SSH_TARGET:$remote_release_dir/"
+"${SCP_CMD[@]}" "$release_dir"/* "$REMOTE_SSH_TARGET:$remote_release_dir/"
 
 CURRENT_STEP="remote activate"
 log "Switching remote current release and restarting service..."
