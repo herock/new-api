@@ -320,3 +320,33 @@ printf '  version: %s\n' "$version"
 printf '  artifact: %s\n' "$release_binary"
 printf '  remote release: %s\n' "$remote_release_dir"
 printf '  current link: %s -> %s\n' "$REMOTE_CURRENT_LINK" "$remote_release_dir"
+
+# Auto-cleanup: keep only the 3 most recent releases locally
+CURRENT_STEP="local cleanup"
+log "Cleaning up old local releases (keeping 3 most recent)..."
+if [[ -d "$LOCAL_BUILD_ROOT" ]]; then
+  old_releases="$(find "$LOCAL_BUILD_ROOT" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; 2>/dev/null | sort -r | tail -n +4)"
+  if [[ -n "$old_releases" ]]; then
+    while IFS= read -r old_dir; do
+      log "  Removing old local release: $old_dir"
+      rm -rf "$LOCAL_BUILD_ROOT/$old_dir"
+    done <<< "$old_releases"
+  fi
+fi
+log "Local cleanup complete"
+
+# Auto-cleanup: keep only the 3 most recent releases remotely
+CURRENT_STEP="remote cleanup"
+log "Cleaning up old remote releases (keeping 3 most recent)..."
+# Get current release name from remote
+current_release="$(run_ssh "$REMOTE_SSH_TARGET" "readlink '$REMOTE_CURRENT_LINK' | xargs basename")"
+# Get all remote releases, exclude current, keep 3 most recent
+old_remote_releases="$(run_ssh "$REMOTE_SSH_TARGET" \
+  "find '$REMOTE_RELEASES_DIR' -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null | grep -v '^$current_release\$' | sort -r | tail -n +4")"
+if [[ -n "$old_remote_releases" ]]; then
+  while IFS= read -r old_dir; do
+    log "  Removing old remote release: $old_dir"
+    run_ssh "$REMOTE_SSH_TARGET" "rm -rf '$REMOTE_RELEASES_DIR/$old_dir'"
+  done <<< "$old_remote_releases"
+fi
+log "Remote cleanup complete"
