@@ -128,12 +128,19 @@ commit_author="$(git -C "$REPO_DIR" log -1 --pretty=%an)"
 commit_date="$(git -C "$REPO_DIR" log -1 --pretty=%ci)"
 
 CURRENT_STEP="remote preflight"
+log "Checking SSH connection to $REMOTE_SSH_TARGET..."
 if ! run_ssh "$REMOTE_SSH_TARGET" "echo connected >/dev/null"; then
   die "Unable to connect to $REMOTE_SSH_TARGET over SSH."
 fi
+log "SSH connection OK"
+
+log "Checking remote dependencies (curl, systemctl)..."
 if ! run_ssh "$REMOTE_SSH_TARGET" "command -v curl >/dev/null && test -x '$REMOTE_SYSTEMCTL_BIN'"; then
   die "Remote host is missing curl or $REMOTE_SYSTEMCTL_BIN."
 fi
+log "Remote dependencies OK"
+
+log "Scanning remote releases for version planning..."
 
 next_version() {
   local today local_max remote_max local_item remote_item local_seq remote_seq
@@ -172,6 +179,7 @@ next_version() {
 
 CURRENT_STEP="version planning"
 version="$(next_version)"
+log "Version planning complete: $version"
 release_dir="$LOCAL_BUILD_ROOT/$version"
 release_binary="$release_dir/$BINARY_NAME"
 
