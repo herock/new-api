@@ -239,13 +239,13 @@ remote_release_dir="$REMOTE_RELEASES_DIR/$version"
 log "Uploading release to $REMOTE_SSH_TARGET:$remote_release_dir ..."
 run_ssh "$REMOTE_SSH_TARGET" \
   "mkdir -p '$remote_release_dir' '$(dirname "$REMOTE_CURRENT_LINK")' '$REMOTE_SHARED_DIR'"
-SCP_CMD=(scp -v -r)
+SCP_CMD=(scp -r)
 if ((${#SSH_OPTS[@]} > 0)); then
   for opt in "${SSH_OPTS[@]}"; do
     SCP_CMD+=(-o "$opt")
   done
 fi
-"${SCP_CMD[@]}" "$release_dir/" "$REMOTE_SSH_TARGET:$remote_release_dir/"
+"${SCP_CMD[@]}" "$release_dir" "$REMOTE_SSH_TARGET:$remote_release_dir/"
 
 CURRENT_STEP="remote activate"
 log "Switching remote current release and restarting service..."
