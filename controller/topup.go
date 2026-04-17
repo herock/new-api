@@ -391,6 +391,18 @@ func RequestAmount(c *gin.Context) {
 	c.JSON(200, gin.H{"message": "success", "data": strconv.FormatFloat(payMoney, 'f', 2, 64)})
 }
 
+// TopUpResponse API 响应结构，包含原始字段和归一化字段
+// 采用 Plan B：旧字段保留 + 新字段并行返回
+type TopUpResponse struct {
+	model.TopUp
+	// 归一化字段
+	PaidAmountUSD       float64 `json:"paid_amount_usd"`
+	CreditedQuota       int64   `json:"credited_quota"`
+	CreditedAmountUSD   float64 `json:"credited_amount_usd"`
+	PaymentMethodDisplay string `json:"payment_method_display"`
+	OrderType           string  `json:"order_type"`
+}
+
 func GetUserTopUps(c *gin.Context) {
 	userId := c.GetInt("id")
 	pageInfo := common.GetPageQuery(c)
@@ -411,8 +423,24 @@ func GetUserTopUps(c *gin.Context) {
 		return
 	}
 
+	// 转换为带归一字段的响应结构
+	responses := make([]*TopUpResponse, 0, len(topups))
+	for _, tu := range topups {
+		normalized := model.NormalizeTopUp(tu)
+		if normalized != nil {
+			responses = append(responses, &TopUpResponse{
+				TopUp:               *tu,
+				PaidAmountUSD:       normalized.PaidAmountUSD,
+				CreditedQuota:       normalized.CreditedQuota,
+				CreditedAmountUSD:   normalized.CreditedAmountUSD,
+				PaymentMethodDisplay: normalized.PaymentMethodDisplay,
+				OrderType:           normalized.OrderType,
+			})
+		}
+	}
+
 	pageInfo.SetTotal(int(total))
-	pageInfo.SetItems(topups)
+	pageInfo.SetItems(responses)
 	common.ApiSuccess(c, pageInfo)
 }
 
@@ -436,8 +464,24 @@ func GetAllTopUps(c *gin.Context) {
 		return
 	}
 
+	// 转换为带归一字段的响应结构
+	responses := make([]*TopUpResponse, 0, len(topups))
+	for _, tu := range topups {
+		normalized := model.NormalizeTopUp(tu)
+		if normalized != nil {
+			responses = append(responses, &TopUpResponse{
+				TopUp:               *tu,
+				PaidAmountUSD:       normalized.PaidAmountUSD,
+				CreditedQuota:       normalized.CreditedQuota,
+				CreditedAmountUSD:   normalized.CreditedAmountUSD,
+				PaymentMethodDisplay: normalized.PaymentMethodDisplay,
+				OrderType:           normalized.OrderType,
+			})
+		}
+	}
+
 	pageInfo.SetTotal(int(total))
-	pageInfo.SetItems(topups)
+	pageInfo.SetItems(responses)
 	common.ApiSuccess(c, pageInfo)
 }
 

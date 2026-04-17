@@ -47,7 +47,7 @@ const STATUS_CONFIG = {
   expired: { type: 'danger', key: '已过期' },
 };
 
-// 支付方式映射
+// 支付方式映射（保留作为后备，优先使用后端返回的 payment_method_display）
 const PAYMENT_METHOD_MAP = {
   stripe: 'Stripe',
   creem: 'Creem',
@@ -145,8 +145,13 @@ const TopupHistoryModal = ({ visible, onCancel, t }) => {
     );
   };
 
-  // 渲染支付方式
-  const renderPaymentMethod = (pm) => {
+  // 渲染支付方式（优先使用归一化字段 payment_method_display）
+  const renderPaymentMethod = (pm, displayMethod) => {
+    // 优先使用后端返回的归一化展示名
+    if (displayMethod) {
+      return <Text>{displayMethod}</Text>;
+    }
+    // 后备方案：使用前端映射
     const displayName = PAYMENT_METHOD_MAP[pm];
     return <Text>{displayName ? t(displayName) : pm || '-'}</Text>;
   };
@@ -171,14 +176,15 @@ const TopupHistoryModal = ({ visible, onCancel, t }) => {
         title: t('支付方式'),
         dataIndex: 'payment_method',
         key: 'payment_method',
-        render: renderPaymentMethod,
+        render: (_, record) => renderPaymentMethod(record.payment_method, record.payment_method_display),
       },
       {
-        title: t('充值额度'),
-        dataIndex: 'amount',
-        key: 'amount',
-        render: (amount, record) => {
-          if (isSubscriptionTopup(record)) {
+        title: t('入账金额'),
+        dataIndex: 'credited_amount_usd',
+        key: 'credited_amount_usd',
+        render: (creditedAmount, record) => {
+          // 使用归一化的 order_type 字段判断是否为订阅订单
+          if (record.order_type === 'subscription') {
             return (
               <Tag color='purple' shape='circle' size='small'>
                 {t('订阅套餐')}
@@ -188,16 +194,16 @@ const TopupHistoryModal = ({ visible, onCancel, t }) => {
           return (
             <span className='flex items-center gap-1'>
               <Coins size={16} />
-              <Text>{amount}</Text>
+              <Text>${Number(creditedAmount || 0).toFixed(2)}</Text>
             </span>
           );
         },
       },
       {
         title: t('支付金额'),
-        dataIndex: 'money',
-        key: 'money',
-        render: (money) => <Text type='danger'>{Number(money || 0).toFixed(2)}</Text>,
+        dataIndex: 'paid_amount_usd',
+        key: 'paid_amount_usd',
+        render: (paidAmount) => <Text type='danger'>${Number(paidAmount || 0).toFixed(2)}</Text>,
       },
       {
         title: t('状态'),
