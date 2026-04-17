@@ -3383,6 +3383,8 @@
     "无法读取剪贴板": "Cannot read clipboard"
   },
   "充值金额": "Top Up Amount",
+  "充值金额（USD $）": "Top Up Amount (USD $)",
   "充值金额，最低 ": "Top Up amount, minimum ",
-  "快速填写充值金额": "Quick Fill Top Up Amount"
+  "快速填写充值金额": "Quick Fill Top Up Amount",
+  "省": "Save"
 }

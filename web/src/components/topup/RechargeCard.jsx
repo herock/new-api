@@ -220,17 +220,55 @@ const RechargeCard = ({
             initValues={{ topUpCount: topUpCount }}
           >
             <div className='space-y-6'>
+              {/* 快速填写充值金额区块 - 仅当有预设选项时显示 */}
+              {(enableOnlineTopUp || enableStripeTopUp || enableWaffoTopUp) && presetAmounts && presetAmounts.length > 0 && (
+                <div>
+                  <Text type='tertiary' strong className='block mb-3'>
+                    {t('快速填写充值金额')}
+                  </Text>
+                  <div className='grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2'>
+                    {presetAmounts.map((preset) => {
+                      const isSelected = selectedPreset === preset.value;
+                      const discount = preset.discount || topupInfo?.discount?.[preset.value] || 1.0;
+                      const hasDiscount = discount < 1.0;
+
+                      return (
+                        <button
+                          key={preset.value}
+                          type='button'
+                          onClick={() => selectPresetAmount(preset)}
+                          className={`
+                            rounded-lg py-2 px-3 text-center transition-all
+                            ${isSelected
+                              ? 'bg-blue-50 border-2 border-blue-500 text-blue-600 font-semibold'
+                              : 'bg-gray-50 border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                            }
+                          `}
+                        >
+                          <div className='text-base'>${preset.value}</div>
+                          {hasDiscount && (
+                            <div className='text-xs text-green-600'>
+                              {t('省')} ${(preset.value * (1 - discount)).toFixed(2)}
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* 充值金额输入框 */}
               {(enableOnlineTopUp || enableStripeTopUp || enableWaffoTopUp) && (
                 <Row gutter={12}>
                   <Col xs={24} sm={24} md={24} lg={10} xl={10}>
                     <Form.InputNumber
                       field='topUpCount'
-                      label={t('充值金额')}
+                      label={t('充值金额（USD $）')}
                       disabled={!enableOnlineTopUp && !enableStripeTopUp && !enableWaffoTopUp}
                       placeholder={
                         t('充值金额，最低 ') + renderQuotaWithAmount(minTopUp)
                       }
-                      prefix={<span style={{ color: 'var(--semi-color-text-2)' }}>USD $</span>}
                       value={topUpCount}
                       min={minTopUp}
                       max={999999999}
@@ -279,89 +317,11 @@ const RechargeCard = ({
                       style={{ width: '100%' }}
                     />
                   </Col>
-
                 </Row>
               )}
 
-              {(enableOnlineTopUp || enableStripeTopUp || enableWaffoTopUp) && presetAmounts && presetAmounts.length > 0 && (
-                <Form.Slot label={t('快速填写充值金额')}>
-                  <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2'>
-                    {presetAmounts.map((preset, index) => {
-                      const discount =
-                        preset.discount || topupInfo?.discount?.[preset.value] || 1.0;
-                      const hasDiscount = discount < 1.0;
-
-                      // sol_usdc 直接使用 USD 语义，不再乘 priceRatio（旧人民币基准）
-                      const isSolUSDC = payWay === 'sol_usdc';
-                      const originalPrice = isSolUSDC ? preset.value : preset.value * priceRatio;
-                      const discountedPrice = isSolUSDC ? preset.value * discount : originalPrice * discount;
-                      const actualPay = discountedPrice;
-                      const save = originalPrice - discountedPrice;
-
-                      const displayValue = preset.value;
-                      const displayActualPay = actualPay;
-                      const displaySave = save;
-                      const symbol = '$';
-
-                      return (
-                        <Card
-                          key={index}
-                          style={{
-                            cursor: 'pointer',
-                            border:
-                              selectedPreset === preset.value
-                                ? '2px solid var(--semi-color-primary)'
-                                : '1px solid var(--semi-color-border)',
-                            height: '100%',
-                            width: '100%',
-                          }}
-                          bodyStyle={{ padding: '12px' }}
-                          onClick={() => {
-                            selectPresetAmount(preset);
-                            onlineFormApiRef.current?.setValue(
-                              'topUpCount',
-                              preset.value,
-                            );
-                          }}
-                        >
-                          <div style={{ textAlign: 'center' }}>
-                            <Typography.Title
-                              heading={6}
-                              style={{ margin: '0 0 8px 0' }}
-                            >
-                              <Coins size={18} />
-                              {formatLargeNumber(displayValue)} {symbol}
-                              {hasDiscount && (
-                                <Tag style={{ marginLeft: 4 }} color='green'>
-                                  {t('折').includes('off')
-                                    ? ((1 - parseFloat(discount)) * 100).toFixed(1)
-                                    : (discount * 10).toFixed(1)}
-                                  {t('折')}
-                                </Tag>
-                              )}
-                            </Typography.Title>
-                            <div
-                              style={{
-                                color: 'var(--semi-color-text-2)',
-                                fontSize: '12px',
-                                margin: '4px 0',
-                              }}
-                            >
-                              {t('实付')} {symbol}
-                              {displayActualPay.toFixed(2)}，
-                              {hasDiscount
-                                ? `${t('节省')} ${symbol}${displaySave.toFixed(2)}`
-                                : `${t('节省')} ${symbol}0.00`}
-                            </div>
-                          </div>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                </Form.Slot>
-              )}
-
-                  {payMethods && payMethods.filter(m => m.type !== 'waffo').length > 0 && (
+              {/* 选择支付方式 */}
+              {payMethods && payMethods.filter(m => m.type !== 'waffo').length > 0 && (
                     <Form.Slot label={t('选择支付方式')}>
                         <Space wrap>
                           {payMethods.filter(m => m.type !== 'waffo').map((payMethod) => {
