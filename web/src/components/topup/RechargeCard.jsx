@@ -236,7 +236,10 @@ const RechargeCard = ({
                         <button
                           key={preset.value}
                           type='button'
-                          onClick={() => selectPresetAmount(preset)}
+                          onClick={() => {
+                            selectPresetAmount(preset);
+                            onlineFormApiRef.current?.setValue('topUpCount', preset.value);
+                          }}
                           className={`
                             rounded-lg py-2 px-3 text-center transition-all
                             ${isSelected
