@@ -231,18 +231,13 @@ const TopUp = () => {
             // Stripe 支付回调处理
             window.open(data.pay_link, '_blank');
           } else {
-            // 普通支付表单提交
+            // 普通支付表单提交（统一在新窗口打开，避免当前页跳走）
             let params = data;
             let url = res.data.url;
             let form = document.createElement('form');
             form.action = url;
             form.method = 'POST';
-            let isSafari =
-              navigator.userAgent.indexOf('Safari') > -1 &&
-              navigator.userAgent.indexOf('Chrome') < 1;
-            if (!isSafari) {
-              form.target = '_blank';
-            }
+            form.target = '_blank';
             for (let key in params) {
               let input = document.createElement('input');
               input.type = 'hidden';
@@ -616,8 +611,12 @@ const TopUp = () => {
     }
   }, [statusState?.status]);
 
+  // adapter 侧 CNY -> USD 固定汇率 7.2
+  const CNY_TO_USD_RATE = 7.2;
+
   const renderAmount = () => {
-    return '$' + amount.toFixed(2);
+    const usd = amount / CNY_TO_USD_RATE;
+    return '$' + usd.toFixed(2);
   };
 
   const getAmount = async (value) => {
@@ -699,7 +698,7 @@ const TopUp = () => {
     setTopUpCount(preset.value);
     setSelectedPreset(preset.value);
 
-    // 计算实际支付金额，考虑折扣
+    // 计算实际支付金额（人民币），考虑折扣
     const discount = preset.discount || topupInfo.discount[preset.value] || 1.0;
     const discountedAmount = preset.value * priceRatio * discount;
     setAmount(discountedAmount);
