@@ -175,7 +175,7 @@ const TopUp = () => {
       if (payment === 'stripe') {
         await getStripeAmount();
       } else {
-        await getAmount();
+        await getAmount(undefined, payment);
       }
 
       if (topUpCount < minTopUp) {
@@ -199,7 +199,7 @@ const TopUp = () => {
     } else {
       // 普通支付处理
       if (amount === 0) {
-        await getAmount();
+        await getAmount(undefined, payWay);
       }
     }
 
@@ -499,6 +499,12 @@ const TopUp = () => {
           setMinTopUp(minTopUpValue);
           setTopUpCount(minTopUpValue);
 
+          // 设置默认支付方式（用于初始化金额查询）
+          const defaultPayMethod = payMethods.find(m => m.type !== 'stripe' && m.type !== 'waffo' && m.type !== 'creem');
+          if (defaultPayMethod) {
+            setPayWay(defaultPayMethod.type);
+          }
+
           // 设置 Creem 产品
           try {
             const products = JSON.parse(data.creem_products || '[]');
@@ -512,8 +518,12 @@ const TopUp = () => {
             setPresetAmounts(generatePresetAmounts(minTopUpValue));
           }
 
-          // 初始化显示实付金额
-          getAmount(minTopUpValue);
+          // 初始化显示实付金额（带上默认支付方式）
+          if (defaultPayMethod) {
+            getAmount(minTopUpValue, defaultPayMethod.type);
+          } else {
+            getAmount(minTopUpValue);
+          }
         } catch (e) {
           setPayMethods([]);
         }
@@ -611,23 +621,22 @@ const TopUp = () => {
     }
   }, [statusState?.status]);
 
-  // adapter 侧 CNY -> USD 固定汇率 7.2
-  const CNY_TO_USD_RATE = 7.2;
-
   const renderAmount = () => {
-    const usd = amount / CNY_TO_USD_RATE;
-    return '$' + usd.toFixed(2);
+    return '$' + amount.toFixed(2);
   };
 
-  const getAmount = async (value) => {
+  const getAmount = async (value, paymentMethodOverride) => {
     if (value === undefined) {
       value = topUpCount;
     }
     setAmountLoading(true);
     try {
-      const res = await API.post('/api/user/amount', {
-        amount: parseFloat(value),
-      });
+      const payload = { amount: parseFloat(value) };
+      const paymentMethod = paymentMethodOverride || payWay;
+      if (paymentMethod) {
+        payload.payment_method = paymentMethod;
+      }
+      const res = await API.post('/api/user/amount', payload);
       if (res !== undefined) {
         const { message, data } = res.data;
         if (message === 'success') {
@@ -698,9 +707,12 @@ const TopUp = () => {
     setTopUpCount(preset.value);
     setSelectedPreset(preset.value);
 
-    // 计算实际支付金额（人民币），考虑折扣
+    // sol_usdc 直接使用 USD 语义，不再乘 priceRatio（旧人民币基准）
     const discount = preset.discount || topupInfo.discount[preset.value] || 1.0;
-    const discountedAmount = preset.value * priceRatio * discount;
+    const isSolUSDC = payWay === 'sol_usdc';
+    const discountedAmount = isSolUSDC
+      ? preset.value * discount
+      : preset.value * priceRatio * discount;
     setAmount(discountedAmount);
   };
 

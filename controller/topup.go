@@ -106,7 +106,8 @@ type EpayRequest struct {
 }
 
 type AmountRequest struct {
-	Amount int64 `json:"amount"`
+	Amount          int64  `json:"amount"`
+	PaymentMethod   string `json:"payment_method,omitempty"`
 }
 
 func GetEpayClient() *epay.Client {
@@ -153,6 +154,33 @@ func getPayMoney(amount int64, group string) float64 {
 	return payMoney.InexactFloat64()
 }
 
+// getPayMoneyUSD 计算 sol_usdc 的真实 USD 金额
+// 与 getPayMoney 逻辑一致，但跳过人民币 Price 系数
+func getPayMoneyUSD(amount int64, group string) float64 {
+	dAmount := decimal.NewFromInt(amount)
+	if operation_setting.GetQuotaDisplayType() == operation_setting.QuotaDisplayTypeTokens {
+		dQuotaPerUnit := decimal.NewFromFloat(common.QuotaPerUnit)
+		dAmount = dAmount.Div(dQuotaPerUnit)
+	}
+
+	topupGroupRatio := common.GetTopupGroupRatio(group)
+	if topupGroupRatio == 0 {
+		topupGroupRatio = 1
+	}
+
+	dTopupGroupRatio := decimal.NewFromFloat(topupGroupRatio)
+	discount := 1.0
+	if ds, ok := operation_setting.GetPaymentSetting().AmountDiscount[int(amount)]; ok {
+		if ds > 0 {
+			discount = ds
+		}
+	}
+	dDiscount := decimal.NewFromFloat(discount)
+
+	payMoney := dAmount.Mul(dTopupGroupRatio).Mul(dDiscount)
+	return payMoney.InexactFloat64()
+}
+
 func getMinTopup() int64 {
 	minTopup := operation_setting.MinTopUp
 	if operation_setting.GetQuotaDisplayType() == operation_setting.QuotaDisplayTypeTokens {
@@ -181,7 +209,13 @@ func RequestEpay(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "error", "data": "获取用户分组失败"})
 		return
 	}
-	payMoney := getPayMoney(req.Amount, group)
+
+	var payMoney float64
+	if req.PaymentMethod == "sol_usdc" {
+		payMoney = getPayMoneyUSD(req.Amount, group)
+	} else {
+		payMoney = getPayMoney(req.Amount, group)
+	}
 	if payMoney < 0.01 {
 		c.JSON(200, gin.H{"message": "error", "data": "充值金额过低"})
 		return
@@ -383,7 +417,13 @@ func RequestAmount(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "error", "data": "获取用户分组失败"})
 		return
 	}
-	payMoney := getPayMoney(req.Amount, group)
+
+	var payMoney float64
+	if req.PaymentMethod == "sol_usdc" {
+		payMoney = getPayMoneyUSD(req.Amount, group)
+	} else {
+		payMoney = getPayMoney(req.Amount, group)
+	}
 	if payMoney <= 0.01 {
 		c.JSON(200, gin.H{"message": "error", "data": "充值金额过低"})
 		return

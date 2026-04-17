@@ -354,17 +354,18 @@ const RechargeCard = ({
                     {presetAmounts.map((preset, index) => {
                       const discount =
                         preset.discount || topupInfo?.discount?.[preset.value] || 1.0;
-                      const originalPrice = preset.value * priceRatio;
-                      const discountedPrice = originalPrice * discount;
                       const hasDiscount = discount < 1.0;
+
+                      // sol_usdc 直接使用 USD 语义，不再乘 priceRatio（旧人民币基准）
+                      const isSolUSDC = payWay === 'sol_usdc';
+                      const originalPrice = isSolUSDC ? preset.value : preset.value * priceRatio;
+                      const discountedPrice = isSolUSDC ? preset.value * discount : originalPrice * discount;
                       const actualPay = discountedPrice;
                       const save = originalPrice - discountedPrice;
 
-                      // adapter 侧 CNY -> USD 固定汇率 7.2
-                      const CNY_TO_USD_RATE = 7.2;
                       const displayValue = preset.value;
-                      const displayActualPay = actualPay / CNY_TO_USD_RATE;
-                      const displaySave = save / CNY_TO_USD_RATE;
+                      const displayActualPay = actualPay;
+                      const displaySave = save;
                       const symbol = '$';
 
                       return (
