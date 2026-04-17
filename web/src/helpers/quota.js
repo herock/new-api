@@ -8,18 +8,19 @@ export const getQuotaPerUnit = () => {
 export const quotaToDisplayAmount = (quota) => {
   const q = Number(quota || 0);
   if (!Number.isFinite(q) || q <= 0) return 0;
-  const { type, rate } = getCurrencyConfig();
+  const { type } = getCurrencyConfig();
   if (type === 'TOKENS') return q;
+  // 前端显示强制使用 USD
   const usd = q / getQuotaPerUnit();
-  if (type === 'USD') return usd;
-  return usd * (rate || 1);
+  return usd;
 };
 
 export const displayAmountToQuota = (amount) => {
   const val = Number(amount || 0);
   if (!Number.isFinite(val) || val <= 0) return 0;
-  const { type, rate } = getCurrencyConfig();
+  const { type } = getCurrencyConfig();
   if (type === 'TOKENS') return Math.round(val);
-  const usd = type === 'USD' ? val : val / (rate || 1);
+  // 前端显示强制使用 USD
+  const usd = val;
   return Math.round(usd * getQuotaPerUnit());
 };

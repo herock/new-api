@@ -31,7 +31,6 @@ import {
   Typography,
 } from '@douyinfe/semi-ui';
 import { API, showError, showSuccess, renderQuota } from '../../helpers';
-import { getCurrencyConfig } from '../../helpers/render';
 import { RefreshCw, Sparkles } from 'lucide-react';
 import SubscriptionPurchaseModal from './modals/SubscriptionPurchaseModal';
 import {
@@ -482,11 +481,9 @@ const SubscriptionPlansCard = ({
               {plans.map((p, index) => {
                 const plan = p?.plan;
                 const totalAmount = Number(plan?.total_amount || 0);
-                const { symbol, rate } = getCurrencyConfig();
                 const price = Number(plan?.price_amount || 0);
-                const convertedPrice = price * rate;
-                const displayPrice = convertedPrice.toFixed(
-                  Number.isInteger(convertedPrice) ? 0 : 2,
+                const displayPrice = price.toFixed(
+                  Number.isInteger(price) ? 0 : 2,
                 );
                 const isPopular = index === 0 && plans.length > 1;
                 const limit = Number(plan?.max_purchase_per_user || 0);
@@ -560,7 +557,7 @@ const SubscriptionPlansCard = ({
                       <div className='py-2'>
                         <div className='flex items-baseline justify-start'>
                           <span className='text-xl font-bold text-purple-600'>
-                            {symbol}
+                            $
                           </span>
                           <span className='text-3xl font-bold text-purple-600'>
                             {displayPrice}
