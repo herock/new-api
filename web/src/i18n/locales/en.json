@@ -3381,5 +3381,8 @@
     "剪贴板中未检测到连接信息": "No connection info found in clipboard",
     "连接信息已填入": "Connection info applied",
     "无法读取剪贴板": "Cannot read clipboard"
-  }
+  },
+  "充值金额": "Top Up Amount",
+  "充值金额，最低 ": "Top Up amount, minimum ",
+  "快速填写充值金额": "Quick Fill Top Up Amount"
 }

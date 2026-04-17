@@ -3337,5 +3337,8 @@
     "剪贴板中未检测到连接信息": "Aucune info de connexion trouvée dans le presse-papiers",
     "连接信息已填入": "Informations de connexion appliquées",
     "无法读取剪贴板": "Impossible de lire le presse-papiers"
-  }
+  },
+  "充值金额": "Montant de recharge",
+  "充值金额，最低 ": "Montant de recharge, minimum ",
+  "快速填写充值金额": "Remplissage rapide du montant"
 }
