@@ -215,6 +215,7 @@ export default function SettingsPaymentGateway(props) {
         initValues={inputs}
         onValueChange={handleFormChange}
         getFormApi={(api) => (formApiRef.current = api)}
+        autoComplete='off'
       >
         <Form.Section text={t('支付设置')}>
           <Text>
@@ -235,6 +236,7 @@ export default function SettingsPaymentGateway(props) {
                 field='EpayId'
                 label={t('易支付商户ID')}
                 placeholder={t('例如：0001')}
+                autoComplete='off'
               />
             </Col>
             <Col xs={24} sm={24} md={8} lg={8} xl={8}>
@@ -243,6 +245,7 @@ export default function SettingsPaymentGateway(props) {
                 label={t('易支付商户密钥')}
                 placeholder={t('敏感信息不会发送到前端显示')}
                 type='password'
+                autoComplete='new-password'
               />
             </Col>
           </Row>
