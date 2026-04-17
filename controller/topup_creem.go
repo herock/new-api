@@ -108,12 +108,13 @@ func (*CreemAdaptor) RequestPay(c *gin.Context, req *CreemPayRequest) {
 
 	// 先创建订单记录，使用产品配置的金额和充值额度
 	topUp := &model.TopUp{
-		UserId:     id,
-		Amount:     selectedProduct.Quota, // 充值额度
-		Money:      selectedProduct.Price, // 支付金额
-		TradeNo:    referenceId,
-		CreateTime: time.Now().Unix(),
-		Status:     common.TopUpStatusPending,
+		UserId:        id,
+		Amount:        selectedProduct.Quota, // 充值额度
+		Money:         selectedProduct.Price, // 支付金额
+		TradeNo:       referenceId,
+		PaymentMethod: PaymentMethodCreem,    // 明确标记为 Creem 支付
+		CreateTime:    time.Now().Unix(),
+		Status:        common.TopUpStatusPending,
 	}
 	err = topUp.Insert()
 	if err != nil {
@@ -126,7 +127,7 @@ func (*CreemAdaptor) RequestPay(c *gin.Context, req *CreemPayRequest) {
 	checkoutUrl, err := genCreemLink(referenceId, selectedProduct, user.Email, user.Username)
 	if err != nil {
 		log.Printf("获取Creem支付链接失败: %v", err)
-		c.JSON(200, gin.H{"message": "error", "data": "拉起支付失败"})
+		c.JSON(200, gin.H{"message": "error", "data": err.Error()})
 		return
 	}
 
@@ -380,7 +381,7 @@ type CreemCheckoutResponse struct {
 
 func genCreemLink(referenceId string, product *CreemProduct, email string, username string) (string, error) {
 	if setting.CreemApiKey == "" {
-		return "", fmt.Errorf("未配置Creem API密钥")
+		return "", fmt.Errorf("Creem API未配置，请联系管理员")
 	}
 
 	// 根据测试模式选择 API 端点
@@ -446,17 +447,17 @@ func genCreemLink(referenceId string, product *CreemProduct, email string, usern
 
 	// 检查响应状态
 	if resp.StatusCode/100 != 2 {
-		return "", fmt.Errorf("Creem API http status %d ", resp.StatusCode)
+		return "", fmt.Errorf("Creem API返回错误状态码 %d，响应: %s", resp.StatusCode, string(body))
 	}
 	// 解析响应
 	var checkoutResp CreemCheckoutResponse
 	err = json.Unmarshal(body, &checkoutResp)
 	if err != nil {
-		return "", fmt.Errorf("解析响应失败: %v", err)
+		return "", fmt.Errorf("解析Creem响应失败: %v，原始响应: %s", err, string(body))
 	}
 
 	if checkoutResp.CheckoutUrl == "" {
-		return "", fmt.Errorf("Creem API resp no checkout url ")
+		return "", fmt.Errorf("Creem API未返回支付链接，响应: %s", string(body))
 	}
 
 	log.Printf("Creem 支付链接创建成功 - 订单号: %s, 支付链接: %s", referenceId, checkoutResp.CheckoutUrl)

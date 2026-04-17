@@ -753,7 +753,11 @@ const TopUp = () => {
 
       {/* Creem 充值确认模态框 */}
       <Modal
-        title={t('确定要充值 $')}
+        title={
+          selectedCreemProduct
+            ? `${t('确定要充值')} ${selectedCreemProduct.currency === 'EUR' ? '€' : '$'}${Number(selectedCreemProduct.price).toFixed(2)}`
+            : t('确认充值')
+        }
         visible={creemOpen}
         onOk={onlineCreemTopUp}
         onCancel={handleCreemCancel}
@@ -769,10 +773,7 @@ const TopUp = () => {
             </p>
             <p>
               {t('价格')}：{selectedCreemProduct.currency === 'EUR' ? '€' : '$'}
-              {selectedCreemProduct.price}
-            </p>
-            <p>
-              {t('充值额度')}：{selectedCreemProduct.quota}
+              {Number(selectedCreemProduct.price).toFixed(2)}
             </p>
             <p>{t('是否确认充值？')}</p>
           </>
