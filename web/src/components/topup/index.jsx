@@ -289,6 +289,12 @@ const TopUp = () => {
       showError(t('产品配置错误，请联系管理员'));
       return;
     }
+    // 校验用户邮箱是否为空（Creem 支付要求）
+    const userEmail = userState?.user?.email || '';
+    if (!userEmail || !userEmail.trim()) {
+      showError(t('请先在个人设置中填写邮箱后再使用 Creem 支付'));
+      return;
+    }
     setConfirmLoading(true);
     try {
       const res = await API.post('/api/user/creem/pay', {

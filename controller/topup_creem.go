@@ -8,16 +8,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/setting"
+	"github.com/gin-gonic/gin"
+	"github.com/thanhpk/randstr"
 	"io"
 	"log"
 	"net/http"
-	"time"
-
-	"github.com/gin-gonic/gin"
-	"github.com/thanhpk/randstr"
 )
 
 const (
@@ -101,6 +102,12 @@ func (*CreemAdaptor) RequestPay(c *gin.Context, req *CreemPayRequest) {
 
 	id := c.GetInt("id")
 	user, _ := model.GetUserById(id, false)
+
+	// 校验用户邮箱是否为空（Creem 支付要求）
+	if strings.TrimSpace(user.Email) == "" {
+		c.JSON(200, gin.H{"message": "error", "data": "请先在个人设置中填写邮箱后再使用 Creem 支付"})
+		return
+	}
 
 	// 生成唯一的订单引用ID
 	reference := fmt.Sprintf("creem-api-ref-%d-%d-%s", user.Id, time.Now().UnixMilli(), randstr.String(4))
