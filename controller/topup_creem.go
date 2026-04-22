@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -39,10 +40,10 @@ func generateCreemSignature(payload string, secret string) string {
 func verifyCreemSignature(payload string, signature string, secret string) bool {
 	if secret == "" {
 		log.Printf("Creem webhook secret not set")
-		if setting.CreemTestMode {
-			log.Printf("Skip Creem webhook sign verify in test mode")
-			return true
-		}
+		return false
+	}
+	if signature == "" {
+		log.Printf("Creem webhook signature not set")
 		return false
 	}
 
@@ -76,6 +77,10 @@ func (*CreemAdaptor) RequestPay(c *gin.Context, req *CreemPayRequest) {
 		c.JSON(200, gin.H{"message": "error", "data": "请选择产品"})
 		return
 	}
+	if setting.CreemWebhookSecret == "" {
+		c.JSON(200, gin.H{"message": "error", "data": "Creem Webhook未配置，请联系管理员"})
+		return
+	}
 
 	// 解析产品列表
 	var products []CreemProduct
@@ -102,6 +107,10 @@ func (*CreemAdaptor) RequestPay(c *gin.Context, req *CreemPayRequest) {
 
 	id := c.GetInt("id")
 	user, _ := model.GetUserById(id, false)
+	if user == nil {
+		c.JSON(200, gin.H{"message": "error", "data": "用户不存在"})
+		return
+	}
 
 	// 校验用户邮箱是否为空（Creem 支付要求）
 	if strings.TrimSpace(user.Email) == "" {
@@ -119,7 +128,7 @@ func (*CreemAdaptor) RequestPay(c *gin.Context, req *CreemPayRequest) {
 		Amount:        selectedProduct.Quota, // 充值额度
 		Money:         selectedProduct.Price, // 支付金额
 		TradeNo:       referenceId,
-		PaymentMethod: PaymentMethodCreem,    // 明确标记为 Creem 支付
+		PaymentMethod: PaymentMethodCreem, // 明确标记为 Creem 支付
 		CreateTime:    time.Now().Unix(),
 		Status:        common.TopUpStatusPending,
 	}
@@ -250,9 +259,7 @@ func CreemWebhook(c *gin.Context) {
 
 	// 打印关键信息（避免输出完整敏感payload）
 	log.Printf("Creem Webhook - URI: %s", c.Request.RequestURI)
-	if setting.CreemTestMode {
-		log.Printf("Creem Webhook - Signature: %s , Body: %s", signature, bodyBytes)
-	} else if signature == "" {
+	if signature == "" {
 		log.Printf("Creem Webhook缺少签名头")
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
@@ -345,6 +352,17 @@ func handleCheckoutCompleted(c *gin.Context, event *CreemWebhookEvent) {
 	if topUp.Status != common.TopUpStatusPending {
 		log.Printf("Creem充值订单状态错误: %s, 当前状态: %s", referenceId, topUp.Status)
 		c.Status(http.StatusOK) // 已处理过的订单，返回成功避免重复处理
+		return
+	}
+	if topUp.PaymentMethod != PaymentMethodCreem {
+		log.Printf("Creem回调订单支付方式不匹配: %s, payment_method: %s", referenceId, topUp.PaymentMethod)
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+	expectedAmountPaid := int(math.Round(topUp.Money * 100))
+	if expectedAmountPaid <= 0 || event.Object.Order.AmountPaid != expectedAmountPaid {
+		log.Printf("Creem回调金额不匹配: %s, paid: %d, expected: %d", referenceId, event.Object.Order.AmountPaid, expectedAmountPaid)
+		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
