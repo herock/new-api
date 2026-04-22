@@ -378,6 +378,20 @@ func EpayNotify(c *gin.Context) {
 			log.Printf("易支付回调订单支付方式不匹配: %s, 订单号: %s", topUp.PaymentMethod, verifyInfo.ServiceTradeNo)
 			return
 		}
+		if verifyInfo.Type != topUp.PaymentMethod {
+			log.Printf("易支付回调支付类型不匹配: callback_type=%s, order_method=%s, 订单号: %s", verifyInfo.Type, topUp.PaymentMethod, verifyInfo.ServiceTradeNo)
+			return
+		}
+		callbackMoney, err := decimal.NewFromString(verifyInfo.Money)
+		if err != nil {
+			log.Printf("易支付回调金额格式错误: money=%s, 订单号: %s", verifyInfo.Money, verifyInfo.ServiceTradeNo)
+			return
+		}
+		orderMoney := decimal.NewFromFloat(topUp.Money).Round(2)
+		if !callbackMoney.Round(2).Equal(orderMoney) {
+			log.Printf("易支付回调金额不匹配: callback_money=%s, order_money=%s, 订单号: %s", callbackMoney.StringFixed(2), orderMoney.StringFixed(2), verifyInfo.ServiceTradeNo)
+			return
+		}
 		if topUp.Status == "pending" {
 			topUp.Status = "success"
 			err := topUp.Update()
