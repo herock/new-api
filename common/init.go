@@ -108,6 +108,11 @@ func InitEnv() {
 	GeminiSafetySetting = GetEnvOrDefaultString("GEMINI_SAFETY_SETTING", "BLOCK_NONE")
 	CohereSafetySetting = GetEnvOrDefaultString("COHERE_SAFETY_SETTING", "NONE")
 
+	// Admin Telegram notification settings
+	AdminTelegramNotifyEnabled = GetEnvOrDefaultBool("ADMIN_TELEGRAM_NOTIFY_ENABLED", false)
+	AdminTelegramBotToken = GetEnvOrDefaultString("ADMIN_TELEGRAM_BOT_TOKEN", "")
+	AdminTelegramChatID = GetEnvOrDefaultString("ADMIN_TELEGRAM_CHAT_ID", "")
+
 	// Initialize rate limit variables
 	GlobalApiRateLimitEnable = GetEnvOrDefaultBool("GLOBAL_API_RATE_LIMIT_ENABLE", true)
 	GlobalApiRateLimitNum = GetEnvOrDefault("GLOBAL_API_RATE_LIMIT", 180)

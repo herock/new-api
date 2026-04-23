@@ -82,20 +82,20 @@ func GetTopUpInfo(c *gin.Context) {
 		"enable_online_topup": operation_setting.PayAddress != "" && operation_setting.EpayId != "" && operation_setting.EpayKey != "",
 		"enable_stripe_topup": setting.StripeApiSecret != "" && setting.StripeWebhookSecret != "" && setting.StripePriceId != "",
 		"enable_creem_topup":  setting.CreemApiKey != "" && setting.CreemProducts != "[]",
-		"enable_waffo_topup": enableWaffo,
+		"enable_waffo_topup":  enableWaffo,
 		"waffo_pay_methods": func() interface{} {
 			if enableWaffo {
 				return setting.GetWaffoPayMethods()
 			}
 			return nil
 		}(),
-		"creem_products": setting.CreemProducts,
-		"pay_methods":         payMethods,
-		"min_topup":           operation_setting.MinTopUp,
-		"stripe_min_topup":    setting.StripeMinTopUp,
-		"waffo_min_topup":     setting.WaffoMinTopUp,
-		"amount_options":      operation_setting.GetPaymentSetting().AmountOptions,
-		"discount":            operation_setting.GetPaymentSetting().AmountDiscount,
+		"creem_products":   setting.CreemProducts,
+		"pay_methods":      payMethods,
+		"min_topup":        operation_setting.MinTopUp,
+		"stripe_min_topup": setting.StripeMinTopUp,
+		"waffo_min_topup":  setting.WaffoMinTopUp,
+		"amount_options":   operation_setting.GetPaymentSetting().AmountOptions,
+		"discount":         operation_setting.GetPaymentSetting().AmountDiscount,
 	}
 	common.ApiSuccess(c, data)
 }
@@ -106,8 +106,8 @@ type EpayRequest struct {
 }
 
 type AmountRequest struct {
-	Amount          int64  `json:"amount"`
-	PaymentMethod   string `json:"payment_method,omitempty"`
+	Amount        int64  `json:"amount"`
+	PaymentMethod string `json:"payment_method,omitempty"`
 }
 
 func GetEpayClient() *epay.Client {
@@ -269,6 +269,15 @@ func RequestEpay(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "error", "data": "创建订单失败"})
 		return
 	}
+
+	service.NotifyAdminTelegramAsync(service.AdminEventTopUpCreated, map[string]any{
+		"user_id":        topUp.UserId,
+		"trade_no":       topUp.TradeNo,
+		"amount":         topUp.Amount,
+		"money":          topUp.Money,
+		"payment_method": topUp.PaymentMethod,
+	})
+
 	c.JSON(200, gin.H{"message": "success", "data": params, "url": uri})
 }
 
@@ -411,6 +420,15 @@ func EpayNotify(c *gin.Context) {
 			}
 			log.Printf("易支付回调更新用户成功 %v", topUp)
 			model.RecordLog(topUp.UserId, model.LogTypeTopup, fmt.Sprintf("使用在线充值成功，充值金额: %v，支付金额：%f", logger.LogQuota(quotaToAdd), topUp.Money))
+
+			service.NotifyAdminTelegramAsync(service.AdminEventTopUpPaid, map[string]any{
+				"user_id":        topUp.UserId,
+				"trade_no":       topUp.TradeNo,
+				"amount":         topUp.Amount,
+				"quota_added":    quotaToAdd,
+				"money":          topUp.Money,
+				"payment_method": topUp.PaymentMethod,
+			})
 		}
 	} else {
 		log.Printf("易支付异常回调: %v", verifyInfo)
@@ -454,11 +472,11 @@ func RequestAmount(c *gin.Context) {
 type TopUpResponse struct {
 	model.TopUp
 	// 归一化字段
-	PaidAmountUSD       float64 `json:"paid_amount_usd"`
-	CreditedQuota       int64   `json:"credited_quota"`
-	CreditedAmountUSD   float64 `json:"credited_amount_usd"`
-	PaymentMethodDisplay string `json:"payment_method_display"`
-	OrderType           string  `json:"order_type"`
+	PaidAmountUSD        float64 `json:"paid_amount_usd"`
+	CreditedQuota        int64   `json:"credited_quota"`
+	CreditedAmountUSD    float64 `json:"credited_amount_usd"`
+	PaymentMethodDisplay string  `json:"payment_method_display"`
+	OrderType            string  `json:"order_type"`
 }
 
 func GetUserTopUps(c *gin.Context) {
@@ -487,12 +505,12 @@ func GetUserTopUps(c *gin.Context) {
 		normalized := model.NormalizeTopUp(tu)
 		if normalized != nil {
 			responses = append(responses, &TopUpResponse{
-				TopUp:               *tu,
-				PaidAmountUSD:       normalized.PaidAmountUSD,
-				CreditedQuota:       normalized.CreditedQuota,
-				CreditedAmountUSD:   normalized.CreditedAmountUSD,
+				TopUp:                *tu,
+				PaidAmountUSD:        normalized.PaidAmountUSD,
+				CreditedQuota:        normalized.CreditedQuota,
+				CreditedAmountUSD:    normalized.CreditedAmountUSD,
 				PaymentMethodDisplay: normalized.PaymentMethodDisplay,
-				OrderType:           normalized.OrderType,
+				OrderType:            normalized.OrderType,
 			})
 		}
 	}
@@ -528,12 +546,12 @@ func GetAllTopUps(c *gin.Context) {
 		normalized := model.NormalizeTopUp(tu)
 		if normalized != nil {
 			responses = append(responses, &TopUpResponse{
-				TopUp:               *tu,
-				PaidAmountUSD:       normalized.PaidAmountUSD,
-				CreditedQuota:       normalized.CreditedQuota,
-				CreditedAmountUSD:   normalized.CreditedAmountUSD,
+				TopUp:                *tu,
+				PaidAmountUSD:        normalized.PaidAmountUSD,
+				CreditedQuota:        normalized.CreditedQuota,
+				CreditedAmountUSD:    normalized.CreditedAmountUSD,
 				PaymentMethodDisplay: normalized.PaymentMethodDisplay,
-				OrderType:           normalized.OrderType,
+				OrderType:            normalized.OrderType,
 			})
 		}
 	}

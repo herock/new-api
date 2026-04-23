@@ -191,6 +191,7 @@ func Register(c *gin.Context) {
 		return
 	}
 	// 生成默认令牌
+	defaultTokenCreated := false
 	if constant.GenerateDefaultToken {
 		key, err := common.GenerateKey()
 		if err != nil {
@@ -217,7 +218,16 @@ func Register(c *gin.Context) {
 			common.ApiErrorI18n(c, i18n.MsgCreateDefaultTokenErr)
 			return
 		}
+		defaultTokenCreated = true
 	}
+
+	service.NotifyAdminTelegramAsync(service.AdminEventUserRegistered, map[string]any{
+		"user_id":               insertedUser.Id,
+		"username":              cleanUser.Username,
+		"has_email":             cleanUser.Email != "",
+		"inviter_id":            inviterId,
+		"default_token_created": defaultTokenCreated,
+	})
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,

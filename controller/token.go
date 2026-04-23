@@ -9,6 +9,7 @@ import (
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/i18n"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting/operation_setting"
 
 	"github.com/gin-gonic/gin"
@@ -227,6 +228,16 @@ func AddToken(c *gin.Context) {
 		common.ApiError(c, err)
 		return
 	}
+
+	service.NotifyAdminTelegramAsync(service.AdminEventTokenCreated, map[string]any{
+		"user_id":         cleanToken.UserId,
+		"name":            cleanToken.Name,
+		"unlimited_quota": cleanToken.UnlimitedQuota,
+		"remain_quota":    cleanToken.RemainQuota,
+		"group":           cleanToken.Group,
+		"expired_time":    cleanToken.ExpiredTime,
+	})
+
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "",

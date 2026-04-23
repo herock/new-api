@@ -100,6 +100,10 @@ var TurnstileSecretKey = ""
 var TelegramBotToken = ""
 var TelegramBotName = ""
 
+var AdminTelegramNotifyEnabled = false
+var AdminTelegramBotToken = ""
+var AdminTelegramChatID = ""
+
 var QuotaForNewUser = 0
 var QuotaForInviter = 0
 var QuotaForInvitee = 0
