@@ -26,6 +26,17 @@ func GetTopUpInfo(c *gin.Context) {
 	// 获取支付方式
 	payMethods := operation_setting.PayMethods
 
+	// 如果 Creem 未启用，从 pay_methods 中过滤掉 creem
+	if !setting.CreemEnabled {
+		filtered := make([]map[string]string, 0, len(payMethods))
+		for _, method := range payMethods {
+			if method["type"] != "creem" {
+				filtered = append(filtered, method)
+			}
+		}
+		payMethods = filtered
+	}
+
 	// 如果启用了 Stripe 支付，添加到支付方法列表
 	if setting.StripeApiSecret != "" && setting.StripeWebhookSecret != "" && setting.StripePriceId != "" {
 		// 检查是否已经包含 Stripe
@@ -78,10 +89,13 @@ func GetTopUpInfo(c *gin.Context) {
 		}
 	}
 
+	enableCreem := setting.CreemEnabled &&
+		setting.CreemApiKey != "" &&
+		setting.CreemProducts != "[]"
 	data := gin.H{
 		"enable_online_topup": operation_setting.PayAddress != "" && operation_setting.EpayId != "" && operation_setting.EpayKey != "",
 		"enable_stripe_topup": setting.StripeApiSecret != "" && setting.StripeWebhookSecret != "" && setting.StripePriceId != "",
-		"enable_creem_topup":  setting.CreemApiKey != "" && setting.CreemProducts != "[]",
+		"enable_creem_topup":  enableCreem,
 		"enable_waffo_topup":  enableWaffo,
 		"waffo_pay_methods": func() interface{} {
 			if enableWaffo {

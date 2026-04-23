@@ -40,6 +40,7 @@ export default function SettingsPaymentGatewayCreem(props) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [inputs, setInputs] = useState({
+    CreemEnabled: false,
     CreemApiKey: '',
     CreemWebhookSecret: '',
     CreemProducts: '[]',
@@ -61,6 +62,7 @@ export default function SettingsPaymentGatewayCreem(props) {
   useEffect(() => {
     if (props.options && formApiRef.current) {
       const currentInputs = {
+        CreemEnabled: props.options.CreemEnabled === true || props.options.CreemEnabled === 'true',
         CreemApiKey: props.options.CreemApiKey || '',
         CreemWebhookSecret: props.options.CreemWebhookSecret || '',
         CreemProducts: props.options.CreemProducts || '[]',
@@ -99,6 +101,12 @@ export default function SettingsPaymentGatewayCreem(props) {
           value: inputs.CreemWebhookSecret,
         });
       }
+
+      // Save enabled setting
+      options.push({
+        key: 'CreemEnabled',
+        value: inputs.CreemEnabled ? 'true' : 'false',
+      });
 
       // Save test mode setting
       options.push({
@@ -286,6 +294,13 @@ export default function SettingsPaymentGatewayCreem(props) {
                   '用于验证回调 new-api 的 webhook 请求的密钥，敏感信息不显示',
                 )}
                 type='password'
+              />
+            </Col>
+            <Col xs={24} sm={24} md={8} lg={8} xl={8}>
+              <Form.Switch
+                field='CreemEnabled'
+                label={t('启用Creem')}
+                extraText={t('关闭后，用户前端不会显示 Creem 支付入口')}
               />
             </Col>
             <Col xs={24} sm={24} md={8} lg={8} xl={8}>

@@ -35,6 +35,11 @@ func SubscriptionRequestCreemPay(c *gin.Context) {
 		return
 	}
 
+	if !setting.CreemEnabled {
+		common.ApiErrorMsg(c, "Creem 支付未启用")
+		return
+	}
+
 	plan, err := model.GetSubscriptionPlanById(req.PlanId)
 	if err != nil {
 		common.ApiError(c, err)

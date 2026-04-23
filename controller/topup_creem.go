@@ -68,6 +68,11 @@ type CreemAdaptor struct {
 }
 
 func (*CreemAdaptor) RequestPay(c *gin.Context, req *CreemPayRequest) {
+	if !setting.CreemEnabled {
+		c.JSON(200, gin.H{"message": "error", "data": "Creem 支付未启用"})
+		return
+	}
+
 	if req.PaymentMethod != PaymentMethodCreem {
 		c.JSON(200, gin.H{"message": "error", "data": "不支持的支付渠道"})
 		return

@@ -324,10 +324,10 @@ const RechargeCard = ({
               )}
 
               {/* 选择支付方式 */}
-              {payMethods && payMethods.filter(m => m.type !== 'waffo').length > 0 && (
+              {payMethods && payMethods.filter(m => m.type !== 'waffo' && (enableCreemTopUp || m.type !== 'creem')).length > 0 && (
                     <Form.Slot label={t('选择支付方式')}>
                         <Space wrap>
-                          {payMethods.filter(m => m.type !== 'waffo').map((payMethod) => {
+                          {payMethods.filter(m => m.type !== 'waffo' && (enableCreemTopUp || m.type !== 'creem')).map((payMethod) => {
                             const minTopupVal = Number(payMethod.min_topup) || 0;
                             const isStripe = payMethod.type === 'stripe';
                             const disabled =
