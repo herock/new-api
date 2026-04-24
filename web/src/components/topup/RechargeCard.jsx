@@ -476,6 +476,9 @@ const RechargeCard = ({
           </Text>
         }
       >
+        <Text type='secondary' style={{ marginBottom: 12, display: 'block' }}>
+          {t('使用登录邮箱发送邮件至 support@pureapi.net 申请免费试用额度')}
+        </Text>
         <Form
           getFormApi={(api) => (redeemFormApiRef.current = api)}
           initValues={{ redemptionCode: redemptionCode }}

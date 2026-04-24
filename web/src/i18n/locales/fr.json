@@ -2703,6 +2703,7 @@
     "请输入供应商名称，如：OpenAI": "Veuillez saisir le nom du fournisseur, tel que : OpenAI",
     "请输入供应商描述": "Veuillez saisir la description du fournisseur",
     "请输入兑换码": "Veuillez saisir le code d'échange",
+    "使用登录邮箱发送邮件至 support@pureapi.net 申请免费试用额度": "Envoyez un e-mail depuis votre adresse de connexion à support@pureapi.net pour demander un quota d'essai gratuit",
     "请输入兑换码！": "Veuillez saisir le code d'échange !",
     "请输入公告内容": "Veuillez saisir le contenu de l'avis",
     "请输入公告内容（支持 Markdown/HTML）": "Veuillez saisir le contenu de l'avis (prend en charge Markdown/HTML)",

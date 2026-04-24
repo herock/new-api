@@ -2749,6 +2749,7 @@
     "请输入供应商名称，如：OpenAI": "Please enter the vendor name, such as: OpenAI",
     "请输入供应商描述": "Please enter the vendor description",
     "请输入兑换码": "Please enter the redemption code",
+    "使用登录邮箱发送邮件至 support@pureapi.net 申请免费试用额度": "Send an email from your login address to support@pureapi.net to request a free trial quota",
     "请输入兑换码！": "Please enter the redemption code!",
     "请输入公告内容": "Please enter the notice content",
     "请输入公告内容（支持 Markdown/HTML）": "Please enter the notice content (supports Markdown/HTML)",
