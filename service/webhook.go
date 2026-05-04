@@ -34,10 +34,7 @@ func generateSignature(secret string, payload []byte) string {
 // SendWebhookNotify 发送 webhook 通知
 func SendWebhookNotify(webhookURL string, secret string, data dto.Notify) error {
 	// 处理占位符
-	content := data.Content
-	for _, value := range data.Values {
-		content = fmt.Sprintf(content, value)
-	}
+	content := renderNotifyContent(data.Content, data.Values)
 
 	// 构建 webhook 负载
 	payload := WebhookPayload{
