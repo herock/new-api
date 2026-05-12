@@ -56,6 +56,23 @@ const PAYMENT_METHOD_MAP = {
   wxpay: '微信',
 };
 
+const CNY_PAYMENT_METHODS = new Set(['alipay', 'wxpay', 'wechat']);
+
+const isCnyPaymentRecord = (record) => {
+  const method = String(record?.payment_method || '').toLowerCase();
+  const displayMethod = String(record?.payment_method_display || '');
+  return (
+    CNY_PAYMENT_METHODS.has(method) ||
+    displayMethod.includes('微信') ||
+    displayMethod.includes('支付宝')
+  );
+};
+
+const formatPaidAmount = (paidAmount, record) => {
+  const amount = Number(paidAmount || 0).toFixed(2);
+  return isCnyPaymentRecord(record) ? `¥${amount}` : `$${amount}`;
+};
+
 const TopupHistoryModal = ({ visible, onCancel, t }) => {
   const [loading, setLoading] = useState(false);
   const [topups, setTopups] = useState([]);
@@ -176,7 +193,11 @@ const TopupHistoryModal = ({ visible, onCancel, t }) => {
         title: t('支付方式'),
         dataIndex: 'payment_method',
         key: 'payment_method',
-        render: (_, record) => renderPaymentMethod(record.payment_method, record.payment_method_display),
+        render: (_, record) =>
+          renderPaymentMethod(
+            record.payment_method,
+            record.payment_method_display,
+          ),
       },
       {
         title: t('入账金额'),
@@ -203,7 +224,9 @@ const TopupHistoryModal = ({ visible, onCancel, t }) => {
         title: t('支付金额'),
         dataIndex: 'paid_amount_usd',
         key: 'paid_amount_usd',
-        render: (paidAmount) => <Text type='danger'>${Number(paidAmount || 0).toFixed(2)}</Text>,
+        render: (paidAmount, record) => (
+          <Text type='danger'>{formatPaidAmount(paidAmount, record)}</Text>
+        ),
       },
       {
         title: t('状态'),
@@ -223,14 +246,14 @@ const TopupHistoryModal = ({ visible, onCancel, t }) => {
           if (record.status === 'pending') {
             actions.push(
               <Button
-                key="complete"
+                key='complete'
                 size='small'
                 type='primary'
                 theme='outline'
                 onClick={() => confirmAdminComplete(record.trade_no)}
               >
                 {t('补单')}
-              </Button>
+              </Button>,
             );
           }
           return actions.length > 0 ? <>{actions}</> : null;
