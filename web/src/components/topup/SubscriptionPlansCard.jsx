@@ -72,6 +72,7 @@ const SubscriptionPlansCard = ({
   t,
   loading = false,
   plans = [],
+  enableSubscriptionPurchase = true,
   payMethods = [],
   enableOnlineTopUp = false,
   enableStripeTopUp = false,
@@ -90,6 +91,7 @@ const SubscriptionPlansCard = ({
   const [refreshing, setRefreshing] = useState(false);
 
   const epayMethods = useMemo(() => getEpayMethods(payMethods), [payMethods]);
+  const visiblePlans = enableSubscriptionPurchase ? plans : [];
 
   const openBuy = (p) => {
     setSelectedPlan(p);
@@ -476,9 +478,9 @@ const SubscriptionPlansCard = ({
           </Card>
 
           {/* 可购买套餐 - 标准定价卡片 */}
-          {plans.length > 0 ? (
+          {visiblePlans.length > 0 ? (
             <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-5 w-full px-1'>
-              {plans.map((p, index) => {
+              {visiblePlans.map((p, index) => {
                 const plan = p?.plan;
                 const totalAmount = Number(plan?.total_amount || 0);
                 const price = Number(plan?.price_amount || 0);
@@ -631,7 +633,7 @@ const SubscriptionPlansCard = ({
                 );
               })}
             </div>
-          ) : (
+          ) : hasAnySubscription ? null : (
             <div className='text-center text-gray-400 text-sm py-4'>
               {t('暂无可购买套餐')}
             </div>

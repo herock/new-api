@@ -23,6 +23,11 @@ type SubscriptionEpayPayRequest struct {
 }
 
 func SubscriptionRequestEpay(c *gin.Context) {
+	if !operation_setting.GetPaymentSetting().EnableSubscriptionPurchase {
+		common.ApiErrorMsg(c, "订阅购买入口未开启")
+		return
+	}
+
 	var req SubscriptionEpayPayRequest
 	if err := c.ShouldBindJSON(&req); err != nil || req.PlanId <= 0 {
 		common.ApiErrorMsg(c, "参数错误")

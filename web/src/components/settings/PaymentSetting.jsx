@@ -31,6 +31,7 @@ const PaymentSetting = () => {
   const { t } = useTranslation();
   let [inputs, setInputs] = useState({
     ServerAddress: '',
+    EnableSubscriptionPurchase: true,
     PayAddress: '',
     EpayId: '',
     EpayKey: '',
@@ -56,7 +57,9 @@ const PaymentSetting = () => {
     const res = await API.get('/api/option/');
     const { success, message, data } = res.data;
     if (success) {
-      let newInputs = {};
+      let newInputs = {
+        EnableSubscriptionPurchase: true,
+      };
       data.forEach((item) => {
         switch (item.key) {
           case 'TopupGroupRatio':
@@ -97,6 +100,9 @@ const PaymentSetting = () => {
           case 'StripeUnitPrice':
           case 'StripeMinTopUp':
             newInputs[item.key] = parseFloat(item.value);
+            break;
+          case 'payment_setting.enable_subscription_purchase':
+            newInputs.EnableSubscriptionPurchase = toBoolean(item.value);
             break;
           default:
             if (item.key.endsWith('Enabled')) {

@@ -93,10 +93,11 @@ func GetTopUpInfo(c *gin.Context) {
 		setting.CreemApiKey != "" &&
 		setting.CreemProducts != "[]"
 	data := gin.H{
-		"enable_online_topup": operation_setting.PayAddress != "" && operation_setting.EpayId != "" && operation_setting.EpayKey != "",
-		"enable_stripe_topup": setting.StripeApiSecret != "" && setting.StripeWebhookSecret != "" && setting.StripePriceId != "",
-		"enable_creem_topup":  enableCreem,
-		"enable_waffo_topup":  enableWaffo,
+		"enable_online_topup":          operation_setting.PayAddress != "" && operation_setting.EpayId != "" && operation_setting.EpayKey != "",
+		"enable_stripe_topup":          setting.StripeApiSecret != "" && setting.StripeWebhookSecret != "" && setting.StripePriceId != "",
+		"enable_creem_topup":           enableCreem,
+		"enable_waffo_topup":           enableWaffo,
+		"enable_subscription_purchase": operation_setting.GetPaymentSetting().EnableSubscriptionPurchase,
 		"waffo_pay_methods": func() interface{} {
 			if enableWaffo {
 				return setting.GetWaffoPayMethods()

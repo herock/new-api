@@ -97,6 +97,8 @@ const TopUp = () => {
   // 订阅相关
   const [subscriptionPlans, setSubscriptionPlans] = useState([]);
   const [subscriptionLoading, setSubscriptionLoading] = useState(true);
+  const [enableSubscriptionPurchase, setEnableSubscriptionPurchase] =
+    useState(true);
   const [billingPreference, setBillingPreference] =
     useState('subscription_first');
   const [activeSubscriptions, setActiveSubscriptions] = useState([]);
@@ -482,6 +484,8 @@ const TopUp = () => {
           const enableStripeTopUp = data.enable_stripe_topup || false;
           const enableOnlineTopUp = data.enable_online_topup || false;
           const enableCreemTopUp = data.enable_creem_topup || false;
+          const enableSubscriptionPurchase =
+            data.enable_subscription_purchase !== false;
           const minTopUpValue = enableOnlineTopUp
             ? data.min_topup
             : enableStripeTopUp
@@ -492,6 +496,7 @@ const TopUp = () => {
           setEnableOnlineTopUp(enableOnlineTopUp);
           setEnableStripeTopUp(enableStripeTopUp);
           setEnableCreemTopUp(enableCreemTopUp);
+          setEnableSubscriptionPurchase(enableSubscriptionPurchase);
           const enableWaffoTopUp = data.enable_waffo_topup || false;
           setEnableWaffoTopUp(enableWaffoTopUp);
           setWaffoPayMethods(data.waffo_pay_methods || []);
@@ -844,6 +849,7 @@ const TopUp = () => {
           onOpenHistory={handleOpenHistory}
           subscriptionLoading={subscriptionLoading}
           subscriptionPlans={subscriptionPlans}
+          enableSubscriptionPurchase={enableSubscriptionPurchase}
           billingPreference={billingPreference}
           onChangeBillingPreference={updateBillingPreference}
           activeSubscriptions={activeSubscriptions}

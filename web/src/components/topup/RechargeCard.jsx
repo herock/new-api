@@ -91,6 +91,7 @@ const RechargeCard = ({
   waffoPayMethods,
   subscriptionLoading = false,
   subscriptionPlans = [],
+  enableSubscriptionPurchase = true,
   billingPreference,
   onChangeBillingPreference,
   activeSubscriptions = [],
@@ -103,7 +104,9 @@ const RechargeCard = ({
   const showAmountSkeleton = useMinimumLoadingTime(amountLoading);
   const [activeTab, setActiveTab] = useState('topup');
   const shouldShowSubscription =
-    !subscriptionLoading && subscriptionPlans.length > 0;
+    !subscriptionLoading &&
+    ((enableSubscriptionPurchase && subscriptionPlans.length > 0) ||
+      allSubscriptions.length > 0);
   const boundEmail = userState?.user?.email?.trim();
   const trialCreditText = boundEmail
     ? `申请$5免费试用额度：用绑定邮箱（${boundEmail}）发邮件到 support@pureapi.net，主题写“申请免费试用额度”，正文留空即可。如果你想要申请更高的免费试用额度，请在正文里详述理由`
@@ -569,6 +572,7 @@ const RechargeCard = ({
                 t={t}
                 loading={subscriptionLoading}
                 plans={subscriptionPlans}
+                enableSubscriptionPurchase={enableSubscriptionPurchase}
                 payMethods={payMethods}
                 enableOnlineTopUp={enableOnlineTopUp}
                 enableStripeTopUp={enableStripeTopUp}

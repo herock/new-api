@@ -19,6 +19,11 @@ type SubscriptionCreemPayRequest struct {
 }
 
 func SubscriptionRequestCreemPay(c *gin.Context) {
+	if !operation_setting.GetPaymentSetting().EnableSubscriptionPurchase {
+		common.ApiErrorMsg(c, "订阅购买入口未开启")
+		return
+	}
+
 	var req SubscriptionCreemPayRequest
 
 	// Keep body for debugging consistency (like RequestCreemPay)
