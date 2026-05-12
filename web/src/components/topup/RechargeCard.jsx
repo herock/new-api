@@ -109,8 +109,8 @@ const RechargeCard = ({
       allSubscriptions.length > 0);
   const boundEmail = userState?.user?.email?.trim();
   const trialCreditText = boundEmail
-    ? `申请$5免费试用额度：用绑定邮箱（${boundEmail}）发邮件到 support@pureapi.net，主题写“申请免费试用额度”，正文留空即可。如果你想要申请更高的免费试用额度，请在正文里详述理由`
-    : '申请$5免费试用额度：请先去个人设置绑定邮箱。绑定完成后，用绑定邮箱发邮件到 support@pureapi.net，主题写“申请免费试用额度”，正文留空即可。如果你想要申请更高的免费试用额度，请在正文里详述理由';
+    ? `申请$5免费试用额度（有效期30天）：用绑定邮箱（${boundEmail}）发邮件到 support@pureapi.net，主题写“申请免费试用额度”，正文留空即可。如果你想要申请更高的免费试用额度，请在正文里详述理由。`
+    : '申请$5免费试用额度（有效期30天）：请先去个人设置绑定邮箱。绑定完成后，用绑定邮箱发邮件到 support@pureapi.net，主题写“申请免费试用额度”，正文留空即可。如果你想要申请更高的免费试用额度，请在正文里详述理由。';
 
   useEffect(() => {
     if (initialTabSetRef.current) return;
@@ -483,9 +483,6 @@ const RechargeCard = ({
           </Text>
         }
       >
-        <Text type='secondary' style={{ marginBottom: 12, display: 'block' }}>
-          {trialCreditText}
-        </Text>
         <Form
           getFormApi={(api) => (redeemFormApiRef.current = api)}
           initValues={{ redemptionCode: redemptionCode }}
@@ -555,6 +552,17 @@ const RechargeCard = ({
           {t('账单')}
         </Button>
       </div>
+
+      <Banner
+        type='info'
+        closeIcon={null}
+        className='!rounded-xl mb-4'
+        description={
+          <Text type='secondary' style={{ lineHeight: 1.7 }}>
+            {trialCreditText}
+          </Text>
+        }
+      />
 
       {shouldShowSubscription ? (
         <Tabs type='card' activeKey={activeTab} onChange={setActiveTab}>
