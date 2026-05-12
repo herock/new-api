@@ -104,6 +104,10 @@ const RechargeCard = ({
   const [activeTab, setActiveTab] = useState('topup');
   const shouldShowSubscription =
     !subscriptionLoading && subscriptionPlans.length > 0;
+  const boundEmail = userState?.user?.email?.trim();
+  const trialCreditText = boundEmail
+    ? `申请$5免费试用额度：用绑定邮箱（${boundEmail}）发邮件到 support@pureapi.net，主题写“申请免费试用额度”，正文留空即可。如果你想要申请更高的免费试用额度，请在正文里详述理由`
+    : '申请$5免费试用额度：请先去个人设置绑定邮箱。绑定完成后，用绑定邮箱发邮件到 support@pureapi.net，主题写“申请免费试用额度”，正文留空即可。如果你想要申请更高的免费试用额度，请在正文里详述理由';
 
   useEffect(() => {
     if (initialTabSetRef.current) return;
@@ -477,7 +481,7 @@ const RechargeCard = ({
         }
       >
         <Text type='secondary' style={{ marginBottom: 12, display: 'block' }}>
-          {t('使用登录邮箱发送邮件至 support@pureapi.net 申请免费试用额度')}
+          {trialCreditText}
         </Text>
         <Form
           getFormApi={(api) => (redeemFormApiRef.current = api)}
