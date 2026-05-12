@@ -621,8 +621,13 @@ const TopUp = () => {
     }
   }, [statusState?.status]);
 
-  const renderAmount = () => {
-    return '$' + amount.toFixed(2);
+  const isCnyPaymentMethod = (paymentMethod) => {
+    return ['alipay', 'wxpay', 'wechat'].includes(paymentMethod);
+  };
+
+  const renderAmount = (value = amount, paymentMethod = payWay) => {
+    const symbol = isCnyPaymentMethod(paymentMethod) ? '¥' : '$';
+    return symbol + Number(value || 0).toFixed(2);
   };
 
   const getAmount = async (value, paymentMethodOverride) => {

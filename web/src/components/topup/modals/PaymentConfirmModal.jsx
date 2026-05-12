@@ -44,6 +44,7 @@ const PaymentConfirmModal = ({
     discountRate && discountRate > 0 && discountRate < 1 && amountNumber > 0;
   const originalAmount = hasDiscount ? amountNumber / discountRate : 0;
   const discountAmount = hasDiscount ? originalAmount - amountNumber : 0;
+  const formatPaymentAmount = (value) => renderAmount(value, payWay);
   return (
     <Modal
       title={
@@ -97,7 +98,7 @@ const PaymentConfirmModal = ({
                     {t('原价')}：
                   </Text>
                   <Text delete className='text-slate-500 dark:text-slate-400'>
-                    ${originalAmount.toFixed(2)}
+                    {formatPaymentAmount(originalAmount)}
                   </Text>
                 </div>
                 <div className='flex justify-between items-center'>
@@ -105,7 +106,7 @@ const PaymentConfirmModal = ({
                     {t('优惠')}：
                   </Text>
                   <Text className='text-emerald-600 dark:text-emerald-400'>
-                    -${discountAmount.toFixed(2)}
+                    -{formatPaymentAmount(discountAmount)}
                   </Text>
                 </div>
               </>
