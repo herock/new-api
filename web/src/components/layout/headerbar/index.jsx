@@ -63,6 +63,8 @@ const HeaderBar = ({ onMobileMenuToggle, drawerOpen, isAuthRoute }) => {
   } = useNotifications(statusState);
 
   const { mainNavLinks } = useNavigation(t, docsLink, headerNavModules);
+  const headerInnerClassName =
+    isConsoleRoute && !isMobile ? 'w-full pl-5 pr-8' : 'w-full px-2';
 
   return (
     <header className='text-semi-color-text-0 sticky top-0 z-50 transition-colors duration-300 bg-white/75 dark:bg-zinc-900/75 backdrop-blur-lg'>
@@ -74,7 +76,7 @@ const HeaderBar = ({ onMobileMenuToggle, drawerOpen, isAuthRoute }) => {
         unreadKeys={getUnreadKeys()}
       />
 
-      <div className='w-full px-2'>
+      <div className={headerInnerClassName}>
         {isAuthRoute ? (
           // Auth layout: language selector only (top-right)
           <div className='flex items-center justify-end h-16 px-2'>
